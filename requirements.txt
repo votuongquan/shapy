@@ -4,10 +4,7 @@ jpeg4py
 joblib
 kornia
 loguru
-torch==1.7.1
-torchgeometry==0.1.2
-torchmetrics==0.2.0
-torchvision==0.8.2
+trimesh
 matplotlib
 numpy
 omegaconf==2.0.6
@@ -20,7 +17,6 @@ scikit-learn
 scipy
 smplx
 tqdm
-trimesh
 yacs
 fvcore
 nflows
