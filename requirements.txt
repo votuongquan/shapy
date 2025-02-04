@@ -5,7 +5,7 @@ joblib
 kornia
 loguru
 matplotlib
-numpy==1.21.5
+numpy
 omegaconf==2.0.6
 open3d
 Pillow
