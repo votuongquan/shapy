@@ -34,7 +34,8 @@ from human_shape.utils import (
     Tensor, BlendShapeDescription, StringList, AppearanceDescription,
     Timer)
 
-from attributes import A2B, B2A
+from attributes.attributes_betas.a2b import A2B
+from attributes.attributes_betas.b2a import B2A
 
 class HMRLikeRegressor(nn.Module):
     def __init__(
