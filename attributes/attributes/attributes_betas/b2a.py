@@ -18,8 +18,8 @@ import PIL.Image as pil_img
 
 from omegaconf import DictConfig
 
-from attributes.attributes.attributes_betas.models import build_network
-from attributes.attributes.utils.config import get_features_from_config
+from attributes.attributes_betas.models import build_network
+from attributes.utils.config import get_features_from_config
 
 
 class B2A(pl.LightningModule):

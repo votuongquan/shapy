@@ -26,15 +26,15 @@ from body_measurements import BodyMeasurements
 import PIL.Image as pil_img
 from omegaconf import DictConfig
 
-import attributes.attributes.utils.constants as constants
-from attributes.attributes.utils.renderer import Renderer
-from attributes.attributes.utils.sparse import sparse_batch_mm
-from attributes.attributes.attributes_betas.models import build_network
-from attributes.attributes.attributes_betas.prob import build_distr_regressor
-from attributes.attributes.utils.losses import VertexEdgeLoss
-from attributes.attributes.utils.config import get_features_from_config
-from attributes.attributes.utils.sampling import sample_in_sphere
-from attributes.attributes.utils.typing import Tensor, Array
+import attributes.utils.constants as constants
+from attributes.utils.renderer import Renderer
+from attributes.utils.sparse import sparse_batch_mm
+from attributes.attributes_betas.models import build_network
+from attributes.attributes_betas.prob import build_distr_regressor
+from attributes.utils.losses import VertexEdgeLoss
+from attributes.utils.config import get_features_from_config
+from attributes.utils.sampling import sample_in_sphere
+from attributes.utils.typing import Tensor, Array
 
 MAX_SUMMARY_IMGS = 16
 
