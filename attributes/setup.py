@@ -25,7 +25,7 @@ import torch
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 # Package meta-data.
-NAME = 'shape_attributes'
+NAME = 'attributes'
 DESCRIPTION = 'PyTorch module for Shape to attribute regression and vice versa'
 URL = ''
 EMAIL = 'vassilis.choutas@tuebingen.mpg.de'
