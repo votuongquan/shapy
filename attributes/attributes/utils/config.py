@@ -2,7 +2,7 @@ from typing import Tuple, Optional
 import sys
 import os
 from dataclasses import dataclass, field
-from attributes.utils.constants import ATTRIBUTE_NAMES, ATTRIBUTE_NAMES_SYNTHETIC_DATA
+from attributes.attributes.utils.constants import ATTRIBUTE_NAMES, ATTRIBUTE_NAMES_SYNTHETIC_DATA
 
 import numpy as np
 import argparse

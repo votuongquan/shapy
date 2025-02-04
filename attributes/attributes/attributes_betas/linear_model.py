@@ -6,9 +6,9 @@ import numpy as np
 from loguru import logger
 from collections import defaultdict
 from body_measurements import BodyMeasurements
-from attributes.utils import constants
-from attributes.utils.config import get_features_from_config
-from attributes.utils.sparse import sparse_batch_mm
+from attributes.attributes.utils import constants
+from attributes.attributes.utils.config import get_features_from_config
+from attributes.attributes.utils.sparse import sparse_batch_mm
 
 
 def build(cfg, eval_bs, device):

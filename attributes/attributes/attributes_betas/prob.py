@@ -19,7 +19,7 @@ from nflows import transforms, distributions, flows
 
 from .models import build_network
 
-from attributes.utils.typing import Tensor, IntList
+from attributes.attributes.utils.typing import Tensor, IntList
 
 
 def build_scale_foo(scale_func: str = 'softplus'):

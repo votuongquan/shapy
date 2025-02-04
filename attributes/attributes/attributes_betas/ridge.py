@@ -15,7 +15,7 @@ from sklearn.linear_model import (LinearRegression, Ridge, Lasso)
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import make_pipeline
 
-from attributes.utils.typing import Tensor, Array
+from attributes.attributes.utils.typing import Tensor, Array
 
 
 class Ridge(nn.Module):

@@ -10,7 +10,7 @@ from omegaconf import DictConfig
 
 from loguru import logger
 from .polynomial import Polynomial
-from attributes.utils.typing import Tensor, IntList, TensorList
+from attributes.attributes.utils.typing import Tensor, IntList, TensorList
 
 
 BN_DIM_DICT = {
