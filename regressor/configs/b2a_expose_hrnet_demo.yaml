@@ -57,7 +57,7 @@ datasets:
       meas_definition_path: "/kaggle/input/shapy-data/utility_files/measurements/measurement_defitions.yaml"
       # meas_vertices_path: '../data/utility_files/measurements/smplx_measurements.yaml'
       meas_vertices_path: "/kaggle/input/shapy-data/utility_files/measurements/smplx_measurements.yaml"
-      #   body_model_folder: "../data/body_models/"
+      # body_model_folder: "../data/body_models/"
       body_model_folder: "/kaggle/input/models-smplx-v1-1-0/models"
   pose:
     # vertex_flip_correspondences: '../data/utility_files/smplx/smplx_correspondences.npz'
