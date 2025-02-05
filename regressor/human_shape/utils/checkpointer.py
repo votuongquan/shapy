@@ -14,7 +14,7 @@ class Checkpointer(object):
                  pretrained='',
                  distributed=False,
                  rank=0,
-                 save_dir='/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A/checkpoints/best_checkpoint'):
+                 save_dir='/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A/checkpoints'):
         self.rank = rank
         self.distributed = distributed
 

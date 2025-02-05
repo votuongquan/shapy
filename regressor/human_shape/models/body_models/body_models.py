@@ -109,7 +109,7 @@ class SMPL(nn.Module):
             self.extra_joint_selector = JointsFromVerticesSelector(
                 fname=extra_joint_path, **kwargs)
 
-        self.faces = to_np(data_struct.f, dtype=int64)
+        self.faces = to_np(data_struct.f, dtype=np.int64)
         self.register_buffer(
             'faces_tensor', to_tensor(self.faces, dtype=torch.long))
 
@@ -565,7 +565,7 @@ class SMPLX(SMPLH):
 
         # The pickle file that contains the barycentric coordinates for
         # regressing the landmarks
-        lmk_faces_idx = data_struct.lmk_faces_idx.astype(int64)
+        lmk_faces_idx = data_struct.lmk_faces_idx.astype(np.int64)
         self.register_buffer('lmk_faces_idx',
                              torch.tensor(lmk_faces_idx, dtype=torch.long))
         lmk_bary_coords = data_struct.lmk_bary_coords
@@ -573,7 +573,7 @@ class SMPLX(SMPLH):
                              torch.tensor(lmk_bary_coords, dtype=dtype))
 
         dynamic_lmk_faces_idx = np.array(
-            data_struct.dynamic_lmk_faces_idx, dtype=int64)
+            data_struct.dynamic_lmk_faces_idx, dtype=np.int64)
         dynamic_lmk_faces_idx = torch.tensor(
             dynamic_lmk_faces_idx,
             dtype=torch.long)
