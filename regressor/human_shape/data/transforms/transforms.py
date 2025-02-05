@@ -430,7 +430,7 @@ class RandomRotation(object):
             #  keypoints_hd = target.get_field('keypoints_hd')
             #  rotated_keyps = (
                 #  np.dot(keypoints_hd[:, :2], M[:2, :2].T) + M[:2, 2] +
-                #  1).astype(np.int)
+                #  1).astype(int)
             #  rotated_keyps = np.concatenate(
                 #  [rotated_keyps, keypoints_hd[:, [2]]], axis=-1)
             #  new_target.add_field('keypoints_hd', rotated_keyps)

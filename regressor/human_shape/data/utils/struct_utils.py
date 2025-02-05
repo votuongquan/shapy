@@ -11,7 +11,7 @@ def targets_to_array_and_indices(
     data_key: str,
 ) -> Tuple[Array, Array]:
     indices = np.array([ii for ii, t in enumerate(targets) if
-                        t.has_field(field_key)], dtype=np.int)
+                        t.has_field(field_key)], dtype=int)
     if len(indices) > 1:
         data_lst = []
         for ii, t in enumerate(targets):

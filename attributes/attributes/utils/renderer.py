@@ -115,7 +115,7 @@ class Renderer():
         plane_vertices[:, 0] = [-ps, ps, ps, -ps]
         plane_vertices[:, 2] = [-ps, -ps, ps, ps]
         plane_faces = np.array([[0, 1, 2], [0, 2, 3]],
-                                   dtype=np.int32).reshape(-1, 3)
+                                   dtype=int32).reshape(-1, 3)
         plane_mesh = trimesh.Trimesh(vertices=plane_vertices,
                                          faces=plane_faces)
         pyr_plane_mesh = pyrender.Mesh.from_trimesh(

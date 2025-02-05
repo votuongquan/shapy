@@ -241,8 +241,8 @@ class HumanBodyInTheWild(dutils.Dataset):
         #    use_face_contour=self.use_face_contour)
         #source_idxs = np.arange(self.keypoints2d[0].shape[0])
         #target_idxs = np.arange(self.keypoints2d[0].shape[0])
-        #self.source_idxs = np.asarray(source_idxs, dtype=np.int64)
-        #self.target_idxs = np.asarray(target_idxs, dtype=np.int64)
+        #self.source_idxs = np.asarray(source_idxs, dtype=int64)
+        #self.target_idxs = np.asarray(target_idxs, dtype=int64)
 
         self.source = keypoint_source
         self.keypoint_names = KEYPOINT_NAMES_DICT[self.source]

@@ -192,14 +192,14 @@ def create_skel_img(
 
         if pair[1] >= keypoints.shape[0] or pair[0] >= keypoints.shape[0]:
             continue
-        center = tuple(keypoints[pair[1], :].astype(np.int32).tolist())
+        center = tuple(keypoints[pair[1], :].astype(int32).tolist())
         cv2.circle(kp_img, center, curr_marker_size, color)
 
         if draw_skel:
             if not valid[pair[0]] and not valid[pair[1]]:
                 continue
-            start_pt = tuple(keypoints[pair[0], :2].astype(np.int32).tolist())
-            end_pt = tuple(keypoints[pair[1], :2].astype(np.int32).tolist())
+            start_pt = tuple(keypoints[pair[0], :2].astype(int32).tolist())
+            end_pt = tuple(keypoints[pair[1], :2].astype(int32).tolist())
             cv2.line(kp_img, start_pt, end_pt,
                      color, thickness=curr_line_width,
                      lineType=cv2.LINE_AA)

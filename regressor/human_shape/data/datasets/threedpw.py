@@ -102,7 +102,7 @@ class ThreeDPW(dutils.Dataset):
         self.joints3d = np.asarray(
             data_dict['joints3d']).astype(np.float32)[idxs]
         self.num_items = len(self.img_paths)
-        self.pids = np.asarray(data_dict['pid'], dtype=np.int32)
+        self.pids = np.asarray(data_dict['pid'], dtype=int32)
         self.center = np.asarray(
             data_dict['center'], dtype=np.float32)[idxs]
         self.scale = np.asarray(

@@ -104,7 +104,7 @@ class Evaluator(object):
         # keypoint annotations.
         gt_joints_3d_indices = np.array(
             [ii for ii, t in enumerate(targets)
-             if t.has_field('keypoints3d')], dtype=np.int)
+             if t.has_field('keypoints3d')], dtype=int)
         output = {}
         # Get the number of valid instances
         num_instances = len(gt_joints_3d_indices)
@@ -204,7 +204,7 @@ class Evaluator(object):
         # Ground truth vertices
         gt_verts_indices = np.array(
             [ii for ii, t in enumerate(targets)
-             if t.has_field(vertex_key)], dtype=np.int)
+             if t.has_field(vertex_key)], dtype=int)
         if len(gt_verts_indices) < 1:
             return output
 
@@ -240,7 +240,7 @@ class Evaluator(object):
         # Ground truth vertices
         gt_verts_indices = np.array(
             [ii for ii, t in enumerate(targets)
-             if t.has_field(vertex_key)], dtype=np.int)
+             if t.has_field(vertex_key)], dtype=int)
         if len(gt_verts_indices) < 1:
             return output
 

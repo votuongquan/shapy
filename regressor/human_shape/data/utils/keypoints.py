@@ -273,13 +273,13 @@ def get_part_idxs(
         for idx, val in enumerate(keypoint_parts.values())
         if 'upper' in val])
     return {
-        'body': body_idxs.astype(np.int64),
-        'hand': hand_idxs.astype(np.int64),
-        'face': face_idxs.astype(np.int64),
-        'head': head_idxs.astype(np.int64),
-        'left_hand': left_hand_idxs.astype(np.int64),
-        'right_hand': right_hand_idxs.astype(np.int64),
-        'flame': flame_idxs.astype(np.int64),
-        'torso': torso_idxs.astype(np.int64),
-        'upper': upper_body_idxs.astype(np.int64),
+        'body': body_idxs.astype(int64),
+        'hand': hand_idxs.astype(int64),
+        'face': face_idxs.astype(int64),
+        'head': head_idxs.astype(int64),
+        'left_hand': left_hand_idxs.astype(int64),
+        'right_hand': right_hand_idxs.astype(int64),
+        'flame': flame_idxs.astype(int64),
+        'torso': torso_idxs.astype(int64),
+        'upper': upper_body_idxs.astype(int64),
     }
