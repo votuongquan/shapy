@@ -14,7 +14,7 @@ class Checkpointer(object):
                  pretrained='',
                  distributed=False,
                  rank=0,
-                 save_dir='/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A/checkpoints'):
+                 save_dir='/tmp/exp'):
         self.rank = rank
         self.distributed = distributed
 
@@ -23,7 +23,7 @@ class Checkpointer(object):
         self.scheduler = scheduler
         self.adv_optimizer = adv_optimizer
 
-        self.save_dir = save_dir
+        self.save_dir = '/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A/checkpoints'
         if self.rank == 0:
             logger.info(f'Creating directory {self.save_dir}')
             os.makedirs(self.save_dir, exist_ok=True)
