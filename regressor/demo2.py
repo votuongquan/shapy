@@ -87,6 +87,7 @@ def main(
                colorize=True)
 
     output_folder = osp.expandvars(exp_cfg.output_folder)
+
     os.makedirs(demo_output_folder, exist_ok=True)
 
     log_file = osp.join(output_folder, 'info.log')
@@ -115,13 +116,13 @@ def main(
 
     model = model.eval()
 
+    part_key = exp_cfg.get('part_key', 'pose')
+    
     # Build data loaders
     dataloaders = build_all_data_loaders(
         exp_cfg, split=split, shuffle=False, enable_augment=False,
         return_full_imgs=True,
     )
-
-    part_key = exp_cfg.get('part_key', 'pose')
 
     if isinstance(dataloaders[part_key], (list,)):
         assert len(dataloaders[part_key]) == 1
@@ -180,6 +181,25 @@ def main(
                 focal_length=focal_length,
             )
 
+        # Use the final stage for mesh saving (following original demo.py pattern)
+        stage_n_out = model_output['stage_02']
+        model_vertices = stage_n_out.get('vertices', None)
+        if model_vertices is not None:
+            faces = stage_n_out['faces']
+            model_vertices = model_vertices.detach().cpu().numpy()
+            camera_parameters = model_output.get('camera_parameters', {})
+            camera_scale = camera_parameters['scale'].detach()
+            camera_transl = camera_parameters['translation'].detach()
+
+            hd_params = weak_persp_to_blender(
+                body_targets,
+                camera_scale=camera_scale,
+                camera_transl=camera_transl,
+                H=H, W=W,
+                sensor_width=sensor_width,
+                focal_length=focal_length,
+            )
+
             # Save PLY files
             for idx in tqdm(range(len(body_targets)), 'Saving PLY files...'):
                 fname = body_targets[idx].get_field('fname')
@@ -199,9 +219,8 @@ def main(
                                        hd_params['transl'][idx], faces,
                                        process=False)
                 mesh_fname = osp.join(curr_out_path,
-                                      f'{imgfname}_{stage_key}.ply')
+                                      f'{imgfname}.ply')
                 mesh.export(mesh_fname)
-                logger.info(f'Saved mesh: {mesh_fname}')
 
     logger.info(f'Average inference time: {total_time / cnt}')
 
