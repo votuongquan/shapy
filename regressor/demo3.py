@@ -38,7 +38,7 @@ class SingleImageProcessor:
     
     def __init__(self, 
                  config_path: str,
-                 model_path: str = None,
+                 model_path: str,
                  focal_length: float = 5000,
                  sensor_width: float = 36,
                  device: str = 'cuda'):
@@ -47,7 +47,7 @@ class SingleImageProcessor:
         
         Args:
             config_path: Path to the experiment config YAML file
-            model_path: Path to trained model folder (optional, can be set via config)
+            model_path: Path to the trained model folder
             focal_length: Camera focal length
             sensor_width: Camera sensor width
             device: Device to run inference on ('cuda' or 'cpu')
@@ -82,21 +82,12 @@ class SingleImageProcessor:
         if self.config_path and osp.exists(self.config_path):
             cfg.merge_with(OmegaConf.load(self.config_path))
         
-        # Set model path - use provided path or default from config
-        if self.model_path:
-            cfg.output_folder = self.model_path
-        elif not hasattr(cfg, 'output_folder') or not cfg.output_folder:
-            # Default model path if not specified
-            cfg.output_folder = '../data/trained_models/shapy/SHAPY_A'
-        
         # Set basic configuration
         cfg.is_training = False
+        cfg.output_folder = self.model_path
         cfg.part_key = 'pose'
         cfg.datasets.batch_size = 1
         cfg.datasets.pose_shape_ratio = 1.0
-        
-        # Store the final model path for later use
-        self.model_path = cfg.output_folder
         
         return cfg
     
@@ -354,7 +345,7 @@ def main():
     
     parser = argparse.ArgumentParser(description='Single Image to PLY Processor')
     parser.add_argument('--config', required=True, help='Path to config YAML file')
-    parser.add_argument('--model-path', help='Path to trained model folder (optional)')
+    parser.add_argument('--model-path', required=True, help='Path to trained model folder')
     parser.add_argument('--image', required=True, help='Path to input image')
     parser.add_argument('--keypoints', required=True, help='Path to keypoints JSON file')
     parser.add_argument('--output', help='Output PLY file path')
@@ -366,7 +357,7 @@ def main():
     # Initialize processor
     processor = SingleImageProcessor(
         config_path=args.config,
-        model_path=args.model_path,  # Can be None
+        model_path=args.model_path,
         focal_length=args.focal_length,
         device=args.device
     )
