@@ -70,7 +70,7 @@ def weak_persp_to_blender(
 @torch.no_grad()
 def main(
     exp_cfg: DictConfig,
-    demo_output_folder: os.PathLike = 'mesh_output',
+    demo_output_folder: os.PathLike = 'demo_output',
     focal_length: float = 5000,
     sensor_width: float = 36,
     split: str = 'test',
@@ -89,7 +89,7 @@ def main(
     output_folder = osp.expandvars(exp_cfg.output_folder)
     os.makedirs(demo_output_folder, exist_ok=True)
 
-    log_file = osp.join(output_folder, 'mesh_generation.log')
+    log_file = osp.join(output_folder, 'info.log')
     logger.add(log_file, level=exp_cfg.logger_level.upper(), colorize=True)
 
     # Build and load model
@@ -131,11 +131,8 @@ def main(
 
     total_time = 0
     cnt = 0
-    mesh_count = 0
 
-    logger.info("Starting mesh generation...")
-
-    for bidx, batch in enumerate(tqdm(body_dloader, dynamic_ncols=True, desc="Processing batches")):
+    for bidx, batch in enumerate(tqdm(body_dloader, dynamic_ncols=True)):
         full_imgs_list, body_imgs, body_targets = batch
 
         if body_imgs is None:
@@ -147,6 +144,7 @@ def main(
         if full_imgs is not None:
             full_imgs = full_imgs.to(device=device)
 
+        # Model inference
         torch.cuda.synchronize()
         start = time.perf_counter()
         model_output = model(body_imgs, body_targets, full_imgs=full_imgs,
@@ -159,61 +157,53 @@ def main(
         _, _, H, W = full_imgs.shape
 
         stage_keys = model_output.get('stage_keys')
-        
-        # Process only the final stage for best quality mesh
-        final_stage_key = stage_keys[-1] if stage_keys else 'stage_02'
-        stage_n_out = model_output.get(final_stage_key, model_output.get('stage_02'))
-        
-        model_vertices = stage_n_out.get('vertices', None)
-        if model_vertices is None:
-            logger.warning(f"No vertices found in batch {bidx}")
-            continue
 
-        faces = stage_n_out['faces']
-        model_vertices = model_vertices.detach().cpu().numpy()
-        
-        camera_parameters = model_output.get('camera_parameters', {})
-        camera_scale = camera_parameters['scale'].detach()
-        camera_transl = camera_parameters['translation'].detach()
+        # Process each stage to extract meshes
+        for stage_key in tqdm(stage_keys, leave=False):
+            stage_n_out = model_output[stage_key]
+            model_vertices = stage_n_out.get('vertices', None)
+            if model_vertices is None:
+                continue
 
-        hd_params = weak_persp_to_blender(
-            body_targets,
-            camera_scale=camera_scale,
-            camera_transl=camera_transl,
-            H=H, W=W,
-            sensor_width=sensor_width,
-            focal_length=focal_length,
-        )
+            faces = stage_n_out['faces']
+            model_vertices = model_vertices.detach().cpu().numpy()
+            camera_parameters = model_output.get('camera_parameters', {})
+            camera_scale = camera_parameters['scale'].detach()
+            camera_transl = camera_parameters['translation'].detach()
 
-        # Save meshes for each person in the batch
-        for idx in tqdm(range(len(body_targets)), desc="Saving meshes", leave=False):
-            fname = body_targets[idx].get_field('fname')
-            filename = body_targets[idx].get_field('filename', '')
-            
-            if filename != '':
-                f1, f2 = filename.split('/')[-3:-1]
-                curr_out_path = osp.join(demo_output_folder, f1, f2)
-            else:
-                curr_out_path = demo_output_folder
+            hd_params = weak_persp_to_blender(
+                body_targets,
+                camera_scale=camera_scale,
+                camera_transl=camera_transl,
+                H=H, W=W,
+                sensor_width=sensor_width,
+                focal_length=focal_length,
+            )
 
-            imgfname = fname.split('.')[0]
-            os.makedirs(curr_out_path, exist_ok=True)
+            # Save PLY files
+            for idx in tqdm(range(len(body_targets)), 'Saving PLY files...'):
+                fname = body_targets[idx].get_field('fname')
+                filename = body_targets[idx].get_field('filename', '')
+                
+                if filename != '':
+                    f1, f2 = filename.split('/')[-3:-1]
+                    curr_out_path = osp.join(demo_output_folder, f1, f2)
+                else:
+                    curr_out_path = demo_output_folder
 
-            # Create and save mesh
-            mesh_vertices = model_vertices[idx] + hd_params['transl'][idx]
-            mesh = trimesh.Trimesh(mesh_vertices, faces, process=False)
-            mesh_fname = osp.join(curr_out_path, f'{imgfname}.ply')
-            
-            try:
+                imgfname = fname.split('.')[0]
+                os.makedirs(curr_out_path, exist_ok=True)
+
+                # Store the body mesh
+                mesh = trimesh.Trimesh(model_vertices[idx] +
+                                       hd_params['transl'][idx], faces,
+                                       process=False)
+                mesh_fname = osp.join(curr_out_path,
+                                      f'{imgfname}_{stage_key}.ply')
                 mesh.export(mesh_fname)
-                mesh_count += 1
-                logger.info(f"Saved mesh: {mesh_fname}")
-            except Exception as e:
-                logger.error(f"Failed to save mesh {mesh_fname}: {str(e)}")
+                logger.info(f'Saved mesh: {mesh_fname}')
 
-    logger.info(f'Average inference time: {total_time / cnt:.4f} seconds')
-    logger.info(f'Total meshes generated: {mesh_count}')
-    logger.info(f'Meshes saved to: {demo_output_folder}')
+    logger.info(f'Average inference time: {total_time / cnt}')
 
 
 if __name__ == '__main__':
@@ -221,16 +211,16 @@ if __name__ == '__main__':
     torch.backends.cudnn.deterministic = False
 
     arg_formatter = argparse.ArgumentDefaultsHelpFormatter
-    description = 'PyTorch SMPL-X Mesh Generator - PLY Output Only'
+    description = 'PyTorch SMPL-X Regressor Demo - PLY Only'
     parser = argparse.ArgumentParser(formatter_class=arg_formatter,
                                      description=description)
 
     parser.add_argument('--exp-cfg', type=str, dest='exp_cfgs',
-                        nargs='+', required=True,
+                        nargs='+',
                         help='The configuration of the experiment')
     parser.add_argument('--output-folder', dest='output_folder',
-                        default='mesh_output', type=str,
-                        help='The folder where the mesh files will be saved')
+                        default='demo_output', type=str,
+                        help='The folder where the PLY files will be saved')
     parser.add_argument('--datasets', nargs='+',
                         default=['openpose'], type=str,
                         help='Datasets to process')
@@ -239,17 +229,17 @@ if __name__ == '__main__':
                         help='The configuration of the Detector')
     parser.add_argument('--focal-length', dest='focal_length', type=float,
                         default=5000,
-                        help='Focal length for camera parameters')
-    parser.add_argument('--sensor-width', dest='sensor_width', type=float,
-                        default=36,
-                        help='Sensor width for camera parameters')
+                        help='Focal length')
     parser.add_argument('--split', default='test', type=str,
                         choices=['train', 'test', 'val'],
                         help='Which split to use')
 
     cmd_args = parser.parse_args()
 
-    # Load configuration
+    output_folder = cmd_args.output_folder
+    focal_length = cmd_args.focal_length
+    split = cmd_args.split
+
     cfg = default_conf.copy()
 
     for exp_cfg in cmd_args.exp_cfgs:
@@ -260,20 +250,17 @@ if __name__ == '__main__':
 
     cfg.is_training = False
     
-    # Configure datasets
+    # Clear splits and set the desired dataset
     for part_key in ['pose', 'shape']:
         splits = cfg.datasets.get(part_key, {}).get('splits', {})
         if splits:
             splits['train'] = []
             splits['val'] = []
             splits['test'] = []
-    
     part_key = cfg.get('part_key', 'pose')
-    cfg.datasets[part_key].splits[cmd_args.split] = cmd_args.datasets
+    cfg.datasets[part_key].splits[split] = cmd_args.datasets
 
     with threadpool_limits(limits=1):
-        main(cfg, 
-             demo_output_folder=cmd_args.output_folder,
-             focal_length=cmd_args.focal_length,
-             sensor_width=cmd_args.sensor_width,
-             split=cmd_args.split)
+        main(cfg, demo_output_folder=output_folder,
+             focal_length=focal_length,
+             split=split)
