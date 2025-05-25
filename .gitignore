@@ -145,3 +145,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+data/expose_release/
+data/trained_models/
+data/utility_files/
+data/body_models/
