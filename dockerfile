@@ -1,40 +1,27 @@
-# Use Python 3.12.10 as base image
-FROM python:3.12.10-slim
-
-# Set working directory
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
 WORKDIR /app
 
-# Install system dependencies that might be needed
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    make \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential \
+    python3-dev \
+    hdf5-tools \
+    libgl1 \
+    libgtk2.0-dev
 
-# Upgrade pip to specific version
+
+COPY . /app
+
 RUN python -m pip install --upgrade pip==23.3.1
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy requirements file first (for better Docker layer caching)
-COPY requirements.txt .
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=$CUDA_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+ENV TORCH_CUDA_ARCH_LIST="8.9"
 
-# Install Python dependencies
-RUN pip install -r requirements.txt
-
-# Copy the entire project
-COPY . .
-
-# Install the mesh-mesh-intersection package
 RUN pip install /app/mesh-mesh-intersection
 
-# Set Python path environment variables
-ENV PYTHONPATH="${PYTHONPATH}:/app/attributes:/usr/local"
-
-# Change to regressor directory and set it as working directory
-WORKDIR /app/regressor
-
-# Expose port (adjust as needed for your Flask/web app)
 EXPOSE 8080
 
-# Run the application
-CMD ["python", "app.py"]
+CMD ["python", "regressor/app.py"]

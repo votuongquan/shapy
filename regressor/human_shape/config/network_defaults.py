@@ -103,14 +103,14 @@ class HRNet:
     @dataclass
     class SubSample:
         num_layers: int = 3
-        num_filters: Tuple[int] = (512,) * num_layers
+        num_filters: Tuple[int] = field(default_factory=lambda: (512,) * 3)
         kernel_size: int = 3
         norm_type: str = 'bn'
         activ_type: str = 'relu'
         dim: int = 2
-        kernel_sizes = [kernel_size] * len(num_filters)
+        kernel_sizes: list = field(default_factory=lambda: [3] * len((512,) * 3))
         stride: int = 2
-        strides: Tuple[int] = (stride,) * len(num_filters)
+        strides: Tuple[int] = field(default_factory=lambda: (2,) * len((512,) * 3))
         padding: int = 1
 
     use_old_impl: bool = False
@@ -118,7 +118,7 @@ class HRNet:
     pretrained_path: str = (
         '../data/hrnet_v2/hrnetv2_w48_imagenet_pretrained.pth'
     )
-    stage1: Stage = field(default_factory=Stage)
+    stage1: Stage = field(default_factory=lambda: HRNet.Stage())
     stage2: Stage = field(default_factory=lambda: HRNet.Stage(num_branches=2, num_blocks=(4, 4),
                           num_channels=(48, 96), block='BASIC'))
     stage3: Stage = field(default_factory=lambda: HRNet.Stage(num_modules=4, num_branches=3,
