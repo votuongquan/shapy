@@ -10,7 +10,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 CONFIG_PATH = "configs/b2a_expose_hrnet_demo.yaml"  
 MODEL_PATH = "/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A"        
-DEVICE = "cpu"  # or "cpu"
+DEVICE = "cuda"  # or "cpu"
 
 # Ensure the static directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
