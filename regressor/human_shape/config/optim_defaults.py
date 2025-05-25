@@ -1,6 +1,6 @@
 from typing import Tuple, List, Optional
 from omegaconf import OmegaConf
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from loguru import logger
 
 
@@ -26,7 +26,7 @@ class RMSProp:
 class Scheduler:
     type: str = 'none'
     gamma: float = 0.1
-    milestones: Optional[Tuple[int]] = tuple()
+    milestones: Optional[Tuple[int]] = field(default_factory=tuple)
     step_size: int = 1000
     warmup_factor: float = 1.0e-1 / 3
     warmup_iters: int = 500
@@ -46,17 +46,17 @@ class OptimConfig:
     weight_decay_bias: float = 0.0
     bias_lr_factor: float = 1.0
 
-    sgd: SGD = SGD()
-    adam: ADAM = ADAM()
-    rmsprop: RMSProp = RMSProp()
+    sgd: SGD = field(default_factory=SGD)
+    adam: ADAM = field(default_factory=ADAM)
+    rmsprop: RMSProp = field(default_factory=RMSProp)
 
-    scheduler: Scheduler = Scheduler()
+    scheduler: Scheduler = field(default_factory=Scheduler)
     #  discriminator: Optional[OptimConfig] = None
 
 
 @dataclass
 class OptimConfigWithDisc(OptimConfig):
-    discriminator: OptimConfig = OptimConfig()
+    discriminator: OptimConfig = field(default_factory=lambda: OptimConfig())
 
 
 conf = OmegaConf.structured(OptimConfigWithDisc)

@@ -1,7 +1,7 @@
 from typing import Tuple
 from copy import deepcopy
 from loguru import logger
-from dataclasses import dataclass, make_dataclass
+from dataclasses import dataclass, make_dataclass, field
 from omegaconf import OmegaConf
 
 
@@ -15,8 +15,8 @@ class GenderShapePrior:
     female_stats_path: str = ''
     male_stats_path: str = ''
     prior_type: str = 'normal'
-    female_normal: Normal = Normal()
-    male_normal: Normal = Normal()
+    female_normal: Normal = field(default_factory=Normal)
+    male_normal: Normal = field(default_factory=Normal)
 
 
 @dataclass
@@ -31,7 +31,7 @@ class Prior:
     path: str = ''
     num_gaussians: int = 8
     reduction: str = 'mean'
-    gender_shape: GenderShapePrior = GenderShapePrior()
+    gender_shape: GenderShapePrior = field(default_factory=GenderShapePrior)
 
 
 # TODO: Break down into parts
@@ -64,7 +64,7 @@ class IdentityLoss:
 
 @dataclass
 class LossWithPrior(Loss):
-    prior: Prior = Prior()
+    prior: Prior = field(default_factory=Prior)
 
 
 @dataclass
@@ -80,59 +80,59 @@ class MultiStageLosses:
 
 @dataclass
 class BodyLossConfig(MultiStageLosses):
-    body_joints_2d: Loss = Loss(type='keypoints', norm_type='l1')
-    face_joints_2d: Loss = Loss(type='keypoints', norm_type='l1')
-    left_hand_joints_2d: Loss = Loss(type='keypoints', norm_type='l1')
-    right_hand_joints_2d: Loss = Loss(type='keypoints', norm_type='l1')
+    body_joints_2d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
+    face_joints_2d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
+    left_hand_joints_2d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
+    right_hand_joints_2d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
 
-    body_joints_3d: Loss = Loss(type='keypoints', norm_type='l1')
-    face_joints_3d: Loss = Loss(type='keypoints', norm_type='l1')
-    left_hand_joints_3d: Loss = Loss(type='keypoints', norm_type='l1')
-    right_hand_joints_3d: Loss = Loss(type='keypoints', norm_type='l1')
+    body_joints_3d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
+    face_joints_3d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
+    left_hand_joints_3d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
+    right_hand_joints_3d: Loss = field(default_factory=lambda: Loss(type='keypoints', norm_type='l1'))
 
-    body_edge_2d: EdgeLoss = EdgeLoss(type='keypoint-edge', norm_type='l1')
-    face_edge_2d: EdgeLoss = EdgeLoss(type='keypoint-edge', norm_type='l1')
-    left_hand_edge_2d: EdgeLoss = EdgeLoss(
-        type='keypoint-edge', norm_type='l1')
-    right_hand_edge_2d: EdgeLoss = EdgeLoss(
-        type='keypoint-edge', norm_type='l1')
+    body_edge_2d: EdgeLoss = field(default_factory=lambda: EdgeLoss(type='keypoint-edge', norm_type='l1'))
+    face_edge_2d: EdgeLoss = field(default_factory=lambda: EdgeLoss(type='keypoint-edge', norm_type='l1'))
+    left_hand_edge_2d: EdgeLoss = field(default_factory=lambda: EdgeLoss(
+        type='keypoint-edge', norm_type='l1'))
+    right_hand_edge_2d: EdgeLoss = field(default_factory=lambda: EdgeLoss(
+        type='keypoint-edge', norm_type='l1'))
 
-    body_edge_3d: EdgeLoss = EdgeLoss(type='keypoint-edge', norm_type='l1')
-    face_edge_3d: EdgeLoss = EdgeLoss(type='keypoint-edge', norm_type='l1')
-    left_hand_edge_3d: EdgeLoss = EdgeLoss(
-        type='keypoint-edge', norm_type='l1')
-    right_hand_edge_3d: EdgeLoss = EdgeLoss(
-        type='keypoint-edge', norm_type='l1')
+    body_edge_3d: EdgeLoss = field(default_factory=lambda: EdgeLoss(type='keypoint-edge', norm_type='l1'))
+    face_edge_3d: EdgeLoss = field(default_factory=lambda: EdgeLoss(type='keypoint-edge', norm_type='l1'))
+    left_hand_edge_3d: EdgeLoss = field(default_factory=lambda: EdgeLoss(
+        type='keypoint-edge', norm_type='l1'))
+    right_hand_edge_3d: EdgeLoss = field(default_factory=lambda: EdgeLoss(
+        type='keypoint-edge', norm_type='l1'))
 
-    shape: LossWithPrior = LossWithPrior()
-    expression: LossWithPrior = LossWithPrior()
-    global_rot: Loss = Loss(type='rotation')
-    body_pose: LossWithPrior = LossWithPrior(type='rotation')
-    left_hand_pose: LossWithPrior = LossWithPrior(type='rotation')
-    right_hand_pose: LossWithPrior = LossWithPrior(type='rotation')
-    jaw_pose: LossWithPrior = LossWithPrior(type='rotation')
+    shape: LossWithPrior = field(default_factory=LossWithPrior)
+    expression: LossWithPrior = field(default_factory=LossWithPrior)
+    global_rot: Loss = field(default_factory=lambda: Loss(type='rotation'))
+    body_pose: LossWithPrior = field(default_factory=lambda: LossWithPrior(type='rotation'))
+    left_hand_pose: LossWithPrior = field(default_factory=lambda: LossWithPrior(type='rotation'))
+    right_hand_pose: LossWithPrior = field(default_factory=lambda: LossWithPrior(type='rotation'))
+    jaw_pose: LossWithPrior = field(default_factory=lambda: LossWithPrior(type='rotation'))
 
-    edge: EdgeLoss = EdgeLoss(type='vertex-edge')
+    edge: EdgeLoss = field(default_factory=lambda: EdgeLoss(type='vertex-edge'))
 
-    vertex: Loss = Loss(type='l2')
+    vertex: Loss = field(default_factory=lambda: Loss(type='l2'))
 
-    mass: Loss = Loss(type='l2')
-    height: Loss = Loss(type='l2')
-    chest: Loss = Loss(type='l2')
-    waist: Loss = Loss(type='l2')
-    hips: Loss = Loss(type='l2')
+    mass: Loss = field(default_factory=lambda: Loss(type='l2'))
+    height: Loss = field(default_factory=lambda: Loss(type='l2'))
+    chest: Loss = field(default_factory=lambda: Loss(type='l2'))
+    waist: Loss = field(default_factory=lambda: Loss(type='l2'))
+    hips: Loss = field(default_factory=lambda: Loss(type='l2'))
 
-    identity: Loss = Loss(type='l2')
+    identity: Loss = field(default_factory=lambda: Loss(type='l2'))
 
-    attributes: Loss = Loss(type='l2')
+    attributes: Loss = field(default_factory=lambda: Loss(type='l2'))
 
-    beta_refined: Loss = Loss(type='l2')
-    vertex_refined: Loss = Loss(type='l2')
+    beta_refined: Loss = field(default_factory=lambda: Loss(type='l2'))
+    vertex_refined: Loss = field(default_factory=lambda: Loss(type='l2'))
 
 
 @dataclass
 class LossConfig:
-    body: BodyLossConfig = BodyLossConfig()
+    body: BodyLossConfig = field(default_factory=BodyLossConfig)
 
 
 conf = OmegaConf.structured(LossConfig)

@@ -1,7 +1,7 @@
 from typing import Tuple
 from loguru import logger
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from omegaconf import OmegaConf
 from .utils import Variable, Pose
 
@@ -14,7 +14,7 @@ class PCA:
 
 @dataclass
 class PoseWithPCA(Pose):
-    pca: PCA = PCA()
+    pca: PCA = field(default_factory=PCA)
 
 
 @dataclass
@@ -56,27 +56,27 @@ class SMPL(AbstractBodyModel):
     use_feet_keypoints: bool = True
     use_face_keypoints: bool = True
     j14_regressor_path: str = ''
-    betas: Shape = Shape()
-    global_rot: Pose = Pose()
-    body_pose: Pose = Pose()
-    translation: Variable = Variable()
+    betas: Shape = field(default_factory=Shape)
+    global_rot: Pose = field(default_factory=Pose)
+    body_pose: Pose = field(default_factory=Pose)
+    translation: Variable = field(default_factory=Variable)
     head_verts_ids_path: str = ''
 
 
 @dataclass
 class SMPLH(SMPL):
-    left_hand_pose: PoseWithPCA = PoseWithPCA()
-    right_hand_pose: PoseWithPCA = PoseWithPCA()
+    left_hand_pose: PoseWithPCA = field(default_factory=PoseWithPCA)
+    right_hand_pose: PoseWithPCA = field(default_factory=PoseWithPCA)
 
 
 @dataclass
 class SMPLX(SMPLH):
     ext: str = 'npz'
     use_face_contour: bool = False
-    expression: Expression = Expression()
-    jaw_pose: Pose = Pose()
-    leye_pose: Pose = Pose()
-    reye_pose: Pose = Pose()
+    expression: Expression = field(default_factory=Expression)
+    jaw_pose: Pose = field(default_factory=Pose)
+    leye_pose: Pose = field(default_factory=Pose)
+    reye_pose: Pose = field(default_factory=Pose)
     hand_vertex_ids_path: str = ''
 
 
@@ -84,9 +84,9 @@ class SMPLX(SMPLH):
 class BodyModel:
     type: str = 'smplx'
     model_folder: str = 'models'
-    smpl: SMPL = SMPL()
-    smplh: SMPLH = SMPLH()
-    smplx: SMPLX = SMPLX()
+    smpl: SMPL = field(default_factory=SMPL)
+    smplh: SMPLH = field(default_factory=SMPLH)
+    smplx: SMPLX = field(default_factory=SMPLX)
 
 
 body_conf = OmegaConf.structured(BodyModel)
