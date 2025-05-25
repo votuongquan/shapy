@@ -4,7 +4,7 @@ output_folder: ""
 use_cuda: True
 float_dtype: "float32"
 
-j14_regressor_path: "../data/expose_release/data/SMPLX_to_J14.pkl"
+j14_regressor_path: "/app/data/expose_release/data/SMPLX_to_J14.pkl"
 summary_steps: 100
 img_summary_steps: 1000
 hd_img_summary_steps: 5000
@@ -12,14 +12,14 @@ eval_steps: 5000
 checkpoint_steps: 1000
 max_duration: 14400.0
 imgs_per_row: 3
-pretrained: "../data/trained_models/expose/body_only/"
+pretrained: "/app/data/trained_models/expose/body_only/"
 
 datasets:
   use_packed: False
   batch_size: 48
   pose_shape_ratio: 0.5
   shape:
-    vertex_flip_correspondences: "../data/utility_files/smplx/smplx_correspondences.npz"
+    vertex_flip_correspondences: "/app/data/utility_files/smplx/smplx_correspondences.npz"
     sampler:
       use_equal_sampling: True
       ratio_2d: 0.25
@@ -51,11 +51,11 @@ datasets:
       annot_fname: "annotations.yaml"
       gender_fname: "genders.yaml"
       mesh_folder: "v_templates/smplx_with_optimization"
-      meas_definition_path: "../data/utility_files/measurements/measurement_defitions.yaml"
-      meas_vertices_path: "../data/utility_files/measurements/smplx_measurements.yaml"
-      body_model_folder: "../data/body_models/"
+      meas_definition_path: "/app/data/utility_files/measurements/measurement_defitions.yaml"
+      meas_vertices_path: "/app/data/utility_files/measurements/smplx_measurements.yaml"
+      body_model_folder: "/app/data/body_models/"
   pose:
-    vertex_flip_correspondences: "../data/utility_files/smplx/smplx_correspondences.npz"
+    vertex_flip_correspondences: "/app/data/utility_files/smplx/smplx_correspondences.npz"
     sampler:
       use_equal_sampling: True
       ratio_2d: 0.25
@@ -143,8 +143,8 @@ losses:
         weight: 1e-2
         gender_shape:
           prior_type: "normal"
-          female_stats_path: "../data/utility_files/shape_priors/female_normal.npz"
-          male_stats_path: "../data/utility_files/shape_priors/male_normal.npz"
+          female_stats_path: "/app/data/utility_files/shape_priors/female_normal.npz"
+          male_stats_path: "/app/data/utility_files/shape_priors/male_normal.npz"
     global_rot:
       type: "rotation"
       weight: 1.0
@@ -181,20 +181,20 @@ network:
     predict_hands: False
     predict_face: False
     compute_measurements: True
-    meas_definition_path: "../data/utility_files/measurements/measurement_defitions.yaml"
-    meas_vertices_path: "../data/utility_files/measurements/smplx_measurements.yaml"
+    meas_definition_path: "/app/data/utility_files/measurements/measurement_defitions.yaml"
+    meas_vertices_path: "/app/data/utility_files/measurements/smplx_measurements.yaml"
     use_b2a: True
     use_a2b: False
     num_attributes: 15
-    b2a_males_checkpoint: "../data/b2a/polynomial/caesar-male_smplx-neutral-10betas/last.ckpt"
-    b2a_females_checkpoint: "../data/b2a/polynomial/caesar-female_smplx-neutral-10betas/last.ckpt"
+    b2a_males_checkpoint: "/app./data/b2a/polynomial/caesar-male_smplx-neutral-10betas/last.ckpt"
+    b2a_females_checkpoint: "/app/data/b2a/polynomial/caesar-female_smplx-neutral-10betas/last.ckpt"
     a2b_males_checkpoint: ""
     a2b_females_checkpoint: ""
 
     backbone:
       type: "hrnet"
       hrnet:
-        pretrained_path: "../data/trained_models/shapy/SHAPY_A/checkpoints/best_checkpoint"
+        pretrained_path: "/app/data/trained_models/shapy/SHAPY_A/checkpoints/best_checkpoint"
     mlp:
       layers: [1024, 1024]
       dropout: 0.5
@@ -211,17 +211,17 @@ network:
 
 body_model:
   type: "smplx"
-  model_folder: "../data/body_models/"
+  model_folder: "/app/data/body_models/"
   smplx:
-    mean_pose_path: "../data/expose_release/data/all_means.pkl"
+    mean_pose_path: "/app/data/expose_release/data/all_means.pkl"
     betas:
       num: 10
     expression:
       num: 10
-    j14_regressor_path: "../data/expose_release/data/SMPLX_to_J14.pkl"
+    j14_regressor_path: "/app/data/expose_release/data/SMPLX_to_J14.pkl"
     use_face_contour: True
     extra_joint_path: ""
-    head_verts_ids_path: "../data/expose_release/utility_files/flame/SMPL-X__FLAME_vertex_ids.npy"
+    head_verts_ids_path: "/app/data/expose_release/utility_files/flame/SMPL-X__FLAME_vertex_ids.npy"
 
     global_rot:
       type: "cont_rot_repr"
@@ -231,6 +231,6 @@ body_model:
 evaluation:
   body:
     p2p_t:
-      input_point_regressor_path: "../data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pkl"
-      target_point_regressor_path: "../data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pkl"
+      input_point_regressor_path: "/app/data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pkl"
+      target_point_regressor_path: "/app/data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pkl"
       align: True

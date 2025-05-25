@@ -7,8 +7,22 @@ RUN apt-get update -y && \
     python3-dev \
     hdf5-tools \
     libgl1 \
-    libgtk2.0-dev
-
+    libgtk2.0-dev \
+    libgl1-mesa-glx \
+    libegl1-mesa \
+    libxrandr2 \
+    libxss1 \
+    libxcursor1 \
+    libxcomposite1 \
+    libasound2 \
+    libxi6 \
+    libxtst6 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . /app
 
@@ -20,7 +34,13 @@ ENV PATH=$CUDA_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 ENV TORCH_CUDA_ARCH_LIST="8.9"
 
+# Set PyOpenGL platform for headless rendering
+ENV PYOPENGL_PLATFORM=egl
+
 RUN pip install /app/mesh-mesh-intersection
+
+# Set Python path
+ENV PYTHONPATH="${PYTHONPATH}:/app/attributes:/usr/local"
 
 EXPOSE 8080
 

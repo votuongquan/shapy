@@ -23,3 +23,4 @@ nflows
 PyYAML
 flask
 opencv-python
+pytorch-lightning

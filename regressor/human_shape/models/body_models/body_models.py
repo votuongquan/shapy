@@ -430,11 +430,15 @@ class SMPLH(SMPL):
             dtype=dtype, single_vertex_per_tip=single_vertex_per_tip,
             **kwargs)
 
-        self.left_hand_pca_mean = data_struct.hands_meanl
-        self.right_hand_pca_mean = data_struct.hands_meanr
+        self.register_buffer('left_hand_pca_mean', 
+                           to_tensor(to_np(data_struct.hands_meanl), dtype=dtype))
+        self.register_buffer('right_hand_pca_mean', 
+                           to_tensor(to_np(data_struct.hands_meanr), dtype=dtype))
 
-        self.left_hand_components = data_struct.hands_componentsl
-        self.right_hand_components = data_struct.hands_componentsr
+        self.register_buffer('left_hand_components', 
+                           to_tensor(to_np(data_struct.hands_componentsl), dtype=dtype))
+        self.register_buffer('right_hand_components', 
+                           to_tensor(to_np(data_struct.hands_componentsr), dtype=dtype))
 
     def forward(
         self,

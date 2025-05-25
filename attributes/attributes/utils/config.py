@@ -32,9 +32,9 @@ class Activation:
     type: str = 'relu'
     inplace: bool = False
 
-    leaky_relu: LeakyReLU = LeakyReLU()
-    prelu: PReLU = PReLU()
-    elu: ELU = ELU()
+    leaky_relu: LeakyReLU = field(default_factory=LeakyReLU)
+    prelu: PReLU = field(default_factory=PReLU)
+    elu: ELU = field(default_factory=ELU)
 
 
 @dataclass
@@ -55,15 +55,15 @@ class GroupNorm:
 @dataclass
 class Normalization:
     type: str = 'batch-norm'
-    batch_norm: BatchNorm = BatchNorm()
-    group_norm: GroupNorm = GroupNorm()
+    batch_norm: BatchNorm = field(default_factory=BatchNorm)
+    group_norm: GroupNorm = field(default_factory=GroupNorm)
 
 
 @dataclass
 class MLP:
     layers: Tuple[int] = (256, 256)
-    activation: Activation = Activation()
-    normalization: Normalization = Normalization()
+    activation: Activation = field(default_factory=Activation)
+    normalization: Normalization = field(default_factory=Normalization)
     dropout: float = 0.0
     bias: bool = True
 
@@ -87,15 +87,15 @@ class RNN:
     init_type: str = 'randn'
     learn_mean: bool = False
     dropout: float = 0.0
-    lstm: LSTM = LSTM()
-    gru: GRU = GRU()
+    lstm: LSTM = field(default_factory=LSTM)
+    gru: GRU = field(default_factory=GRU)
 
 
 @dataclass
 class ResNet:
     layers: Tuple[int] = (256, 256)
-    activation: Activation = Activation()
-    normalization: Normalization = Normalization()
+    activation: Activation = field(default_factory=Activation)
+    normalization: Normalization = field(default_factory=Normalization)
     dropout: float = 0.0
     bias: bool = True
 
@@ -107,9 +107,9 @@ class MixtureOfExperts:
     @dataclass
     class Network:
         type: str = 'mlp'
-        mlp: MLP = MLP()
-        resnet: ResNet = ResNet()
-    network: Network = Network()
+        mlp: MLP = field(default_factory=MLP)
+        resnet: ResNet = field(default_factory=ResNet)
+    network: Network = field(default_factory=Network)
 
 
 @dataclass
@@ -123,9 +123,9 @@ class IterativeRegressor:
     @dataclass
     class Network:
         type: str = 'mlp'
-        mlp: MLP = MLP()
-        rnn: RNN = RNN()
-    network: Network = Network()
+        mlp: MLP = field(default_factory=MLP)
+        rnn: RNN = field(default_factory=RNN)
+    network: Network = field(default_factory=Network)
 
 
 @dataclass
@@ -144,14 +144,14 @@ class Polynomial:
 @dataclass
 class Network:
     type: str = 'mlp'
-    polynomial: Polynomial = Polynomial()
-    mlp: MLP = MLP()
-    resnet: ResNet = ResNet()
-    moe: MixtureOfExperts = MixtureOfExperts()
-    imoe: MixtureOfExperts = MixtureOfExperts()
-    iterative: IterativeRegressor = IterativeRegressor()
+    polynomial: Polynomial = field(default_factory=Polynomial)
+    mlp: MLP = field(default_factory=MLP)
+    resnet: ResNet = field(default_factory=ResNet)
+    moe: MixtureOfExperts = field(default_factory=MixtureOfExperts)
+    imoe: MixtureOfExperts = field(default_factory=MixtureOfExperts)
+    iterative: IterativeRegressor = field(default_factory=IterativeRegressor)
 
-    init: NetworkInit = NetworkInit()
+    init: NetworkInit = field(default_factory=NetworkInit)
 
 
 @dataclass
@@ -228,8 +228,8 @@ class Probabilistic:
     type: str = 'gaussian'
     num_samples: int = 32
     noise_std: float = 0.0
-    gaussian = MultivariateNormal = MultivariateNormal()
-    flow: Flow = Flow()
+    gaussian: MultivariateNormal = field(default_factory=MultivariateNormal)
+    flow: Flow = field(default_factory=Flow)
 
 
 @dataclass
@@ -256,7 +256,7 @@ class Scheduler:
     class Exponential:
         gamma: float = 0.99
         last_epoch: int = -1
-    exponential: Exponential = Exponential()
+    exponential: Exponential = field(default_factory=Exponential)
 
 
 @dataclass
@@ -284,7 +284,7 @@ class Config:
     weight_decay: float = 0.0
 
     use_scheduler: bool = False
-    scheduler: Scheduler = Scheduler()
+    scheduler: Scheduler = field(default_factory=Scheduler)
 
     edge_weight: float = 0.0
     height_weight: float = 0.0
@@ -330,16 +330,16 @@ class Config:
 
     # Select input features
     use_attributes: bool = True
-    female_attributes: FemaleAttributes = FemaleAttributes()
-    male_attributes: MaleAttributes = MaleAttributes()
+    female_attributes: FemaleAttributes = field(default_factory=FemaleAttributes)
+    male_attributes: MaleAttributes = field(default_factory=MaleAttributes)
     use_measurements: bool = False
-    measurements: Measurements = Measurements()
+    measurements: Measurements = field(default_factory=Measurements)
 
-    network: Network = Network()
+    network: Network = field(default_factory=Network)
 
-    probabilistic: Probabilistic = Probabilistic()
+    probabilistic: Probabilistic = field(default_factory=Probabilistic)
 
-    regression: Regression = Regression()
+    regression: Regression = field(default_factory=Regression)
 
 
 default_conf = OmegaConf.structured(Config)

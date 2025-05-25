@@ -8,8 +8,8 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "static"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-CONFIG_PATH = "configs/b2a_expose_hrnet_app.yaml"  
-MODEL_PATH = "../data/trained_models/shapy/SHAPY_A"         
+CONFIG_PATH = "/app/regressor/configs/b2a_expose_hrnet_app.yaml"  
+MODEL_PATH = "/app/data/trained_models/shapy/SHAPY_A"         
 DEVICE = "cuda"  # or "cpu"
 
 # Ensure the static directory exists
@@ -138,4 +138,4 @@ if __name__ == '__main__':
     print("Download endpoint: GET /download/<filename>")
     print("Health check: GET /health")
     
-    app.run(port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080)
