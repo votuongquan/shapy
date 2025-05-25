@@ -26,9 +26,9 @@ class Activation:
     type: str = 'relu'
     inplace: bool = True
 
-    leaky_relu: LeakyReLU = LeakyReLU()
-    prelu: PReLU = PReLU()
-    elu: ELU = ELU()
+    leaky_relu: LeakyReLU = field(default_factory=LeakyReLU)
+    prelu: PReLU = field(default_factory=PReLU)
+    elu: ELU = field(default_factory=ELU)
 
 
 @dataclass
@@ -55,9 +55,9 @@ class LayerNorm:
 @dataclass
 class Normalization:
     type: str = 'batch-norm'
-    batch_norm: BatchNorm = BatchNorm()
-    layer_norm = LayerNorm = LayerNorm()
-    group_norm: GroupNorm = GroupNorm()
+    batch_norm: BatchNorm = field(default_factory=BatchNorm)
+    layer_norm: LayerNorm = field(default_factory=LayerNorm)  # Fixed the typo here too
+    group_norm: GroupNorm = field(default_factory=GroupNorm)
 
 
 @dataclass
@@ -80,8 +80,8 @@ class Perspective:
 class Camera:
     type: str = 'weak-persp'
     pos_func: str = 'softplus'
-    weak_persp: WeakPerspective = WeakPerspective()
-    perspective: Perspective = Perspective()
+    weak_persp: WeakPerspective = field(default_factory=WeakPerspective)
+    perspective: Perspective = field(default_factory=Perspective)
 
 
 @dataclass
@@ -118,18 +118,17 @@ class HRNet:
     pretrained_path: str = (
         '../data/hrnet_v2/hrnetv2_w48_imagenet_pretrained.pth'
     )
-    stage1: Stage = Stage()
-    stage2: Stage = Stage(num_branches=2, num_blocks=(4, 4),
-                          num_channels=(48, 96), block='BASIC')
-    stage3: Stage = Stage(num_modules=4, num_branches=3,
+    stage1: Stage = field(default_factory=Stage)
+    stage2: Stage = field(default_factory=lambda: HRNet.Stage(num_branches=2, num_blocks=(4, 4),
+                          num_channels=(48, 96), block='BASIC'))
+    stage3: Stage = field(default_factory=lambda: HRNet.Stage(num_modules=4, num_branches=3,
                           num_blocks=(4, 4, 4),
                           num_channels=(48, 96, 192),
-                          block='BASIC')
-    stage4: Stage = Stage(num_modules=3, num_branches=4,
+                          block='BASIC'))
+    stage4: Stage = field(default_factory=lambda: HRNet.Stage(num_modules=3, num_branches=4,
                           num_blocks=(4, 4, 4, 4,),
                           num_channels=(48, 96, 192, 384),
-                          block='BASIC',
-                          )
+                          block='BASIC'))
 
 
 @dataclass
@@ -137,15 +136,15 @@ class Backbone:
     type: str = 'resnet50'
     pretrained: bool = True
 
-    resnet: ResNet = ResNet()
-    hrnet: HRNet = HRNet()
+    resnet: ResNet = field(default_factory=ResNet)
+    hrnet: HRNet = field(default_factory=HRNet)
 
 
 @dataclass
 class MLP:
     layers: Tuple[int] = (1024, 1024)
-    activation: Activation = Activation()
-    normalization: Normalization = Normalization()
+    activation: Activation = field(default_factory=Activation)
+    normalization: Normalization = field(default_factory=Normalization)
     preactivated: bool = False
     dropout: float = 0.0
     init_type: str = 'xavier'
@@ -156,8 +155,8 @@ class MLP:
 @dataclass
 class FCN:
     layers: Tuple[int] = (1024, 1024)
-    activation: Activation = Activation()
-    normalization: Normalization = Normalization()
+    activation: Activation = field(default_factory=Activation)
+    normalization: Normalization = field(default_factory=Normalization)
     preactivated: bool = False
     dropout: float = 0.0
     kernel_size: int = 3
@@ -190,9 +189,9 @@ class HMRLike:
     detach_mean: bool = False
     learn_mean: bool = False
 
-    backbone: Backbone = Backbone(type='resnet50')
-    camera: Camera = Camera()
-    mlp: MLP = MLP()
+    backbone: Backbone = field(default_factory=lambda: Backbone(type='resnet50'))
+    camera: Camera = field(default_factory=Camera)
+    mlp: MLP = field(default_factory=MLP)
 
 
 @dataclass
@@ -258,11 +257,11 @@ class Network:
     use_sync_bn: bool = True
 
     #  expose: ExPose = ExPose()
-    hmr: HMRLike = HMRLike()
-    smpl: SMPL = SMPL()
-    smplh: SMPLH = SMPLH()
-    smplx: SMPLX = SMPLX()
-    expose: SMPLX = SMPLX()
+    hmr: HMRLike = field(default_factory=HMRLike)
+    smpl: SMPL = field(default_factory=SMPL)
+    smplh: SMPLH = field(default_factory=SMPLH)
+    smplx: SMPLX = field(default_factory=SMPLX)
+    expose: SMPLX = field(default_factory=SMPLX)
 
 
 conf = OmegaConf.structured(Network)

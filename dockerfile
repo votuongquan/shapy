@@ -1,44 +1,40 @@
-FROM nvidia/cuda:12.4.0-devel-ubuntu22.04
+# Use Python 3.12.10 as base image
+FROM python:3.12.10-slim
 
+# Set working directory
 WORKDIR /app
 
-# Cài Python 3.10 và các công cụ cần thiết
-RUN apt-get update && apt-get install -y software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y python3.10 python3.10-dev python3.10-distutils python3-pip build-essential hdf5-tools libgl1 libgtk2.0-dev
+# Install system dependencies that might be needed
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip cho Python 3.10
-RUN python3.10 -m pip install --upgrade pip==23.3.1
+# Upgrade pip to specific version
+RUN python -m pip install --upgrade pip==23.3.1
 
-# SOLUTION 1: Force ignore installed packages and use --break-system-packages
-# RUN python3.10 -m pip install --break-system-packages --force-reinstall blinker
+# Copy requirements file first (for better Docker layer caching)
+COPY requirements.txt .
 
-# SOLUTION 2: Remove system blinker package first (RECOMMENDED)
-RUN apt-get remove -y python3-blinker || true
+# Install Python dependencies
+RUN pip install -r requirements.txt
 
-# Cài PyTorch, torchvision, torchaudio cho CUDA 12.4 và Python 3.10
-RUN python3.10 -m pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+# Copy the entire project
+COPY . .
 
-COPY . /app
-
-ENV CUDA_HOME=/usr/local/cuda
-ENV PATH=$CUDA_HOME/bin:$PATH
-ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-ENV TORCH_CUDA_ARCH_LIST="8.9"
-
-# Install requirements with ignore-installed for problematic packages
-RUN python3.10 -m pip install --no-cache-dir --ignore-installed blinker -r requirements.txt
-
-# Cài gói mesh-mesh-intersection
-RUN python3.10 -m pip install /app/mesh-mesh-intersection
+# Install the mesh-mesh-intersection package
+RUN pip install /app/mesh-mesh-intersection
 
 # Set Python path environment variables
-ENV PYTHONPATH="/app/shapy/attributes:/usr/local"
+ENV PYTHONPATH="${PYTHONPATH}:/app/attributes:/usr/local"
 
-# Set working directory to regressor folder
+# Change to regressor directory and set it as working directory
 WORKDIR /app/regressor
 
-# Expose port (adjust if your app uses a different port)
+# Expose port (adjust as needed for your Flask/web app)
 EXPOSE 8080
 
-CMD ["python3.10", "app.py"]
+# Run the application
+CMD ["python", "app.py"]
