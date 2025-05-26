@@ -1,22 +1,26 @@
 import numpy as np
 import PIL.Image as pil_img
+import PIL.ImageOps
 from loguru import logger
 import cv2
 import PIL.ExifTags
+import warnings
+import os
 
-# Try to import jpeg4py, but fallback to cv2 if not available
-try:
-    import jpeg4py as jpeg
-    JPEG4PY_AVAILABLE = True
-    logger.info("jpeg4py loaded successfully")
-except (ImportError, OSError) as e:
-    logger.warning(f"jpeg4py not available: {e}. Using cv2 for all image reading.")
-    JPEG4PY_AVAILABLE = False
+# Suppress any lingering jpeg4py warnings
+warnings.filterwarnings("ignore", message=".*decompressor.*", category=AttributeError)
+warnings.filterwarnings("ignore", message=".*'JPEG' object has no attribute.*", category=AttributeError)
+warnings.filterwarnings("ignore", category=AttributeError, module="jpeg4py")
+
+# Set environment variables to reduce verbosity
+os.environ['JPEG4PY_VERBOSE'] = '0'
+
+# We'll use Pillow and OpenCV instead of jpeg4py for better reliability
 
 
 def read_img(img_fn, dtype=np.float32):
     """
-    Read image from file with automatic fallback from jpeg4py to cv2.
+    Read image from file using Pillow and OpenCV with automatic fallback.
     Handles EXIF orientation for JPEG files.
     
     Args:
@@ -28,61 +32,45 @@ def read_img(img_fn, dtype=np.float32):
     """
     img = None
     
-    if img_fn.endswith(('jpeg', 'jpg', 'JPEG', 'JPG')):
-        # Try jpeg4py first if available (faster for JPEG)
-        if JPEG4PY_AVAILABLE:
-            try:
-                with open(img_fn, 'rb') as f:
-                    img = jpeg.JPEG(f).decode()
-                logger.debug(f"Successfully read {img_fn} with jpeg4py")
-            except (jpeg.JPEGRuntimeError, OSError) as e:
-                logger.warning(f'{img_fn} failed with jpeg4py: {e}. Falling back to cv2.')
-                img = None
-            except Exception as e:
-                logger.warning(f'Unexpected error with jpeg4py for {img_fn}: {e}. Falling back to cv2.')
-                img = None
-        
-        # Fallback to cv2 if jpeg4py failed or not available
-        if img is None:
-            try:
-                img = cv2.imread(img_fn)
-                if img is not None:
-                    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                    logger.debug(f"Successfully read {img_fn} with cv2")
+    # Try Pillow first (handles EXIF automatically and supports more formats)
+    try:
+        with pil_img.open(img_fn) as pil_image:
+            # Handle EXIF orientation automatically
+            pil_image = _apply_exif_orientation_pil(pil_image)
+            
+            # Convert to RGB if needed
+            if pil_image.mode != 'RGB':
+                if pil_image.mode == 'RGBA':
+                    # Handle alpha channel by compositing over white background
+                    background = pil_img.new('RGB', pil_image.size, (255, 255, 255))
+                    background.paste(pil_image, mask=pil_image.split()[-1])
+                    pil_image = background
                 else:
-                    raise ValueError(f"cv2.imread returned None for {img_fn}")
-            except Exception as e:
-                logger.error(f"Failed to read {img_fn} with cv2: {e}")
-                raise ValueError(f"Could not load image: {img_fn}")
+                    pil_image = pil_image.convert('RGB')
+            
+            img = np.array(pil_image)
+            logger.debug(f"Successfully read {img_fn} with Pillow")
+            
+    except Exception as e:
+        logger.warning(f'Failed to read {img_fn} with Pillow: {e}. Falling back to OpenCV.')
         
-        # Handle EXIF orientation for JPEG files
-        try:
-            with pil_img.open(img_fn) as pil_image:
-                exif_raw_dict = pil_image._getexif()
-                if exif_raw_dict is not None:
-                    exif_data = {
-                        PIL.ExifTags.TAGS[k]: v
-                        for k, v in exif_raw_dict.items()
-                        if k in PIL.ExifTags.TAGS
-                    }
-                    orientation = exif_data.get('Orientation', None)
-                    if orientation is not None and orientation != 1:
-                        img = _apply_exif_orientation(img, orientation)
-                        logger.debug(f"Applied EXIF orientation {orientation} to {img_fn}")
-        except Exception as e:
-            logger.warning(f"Could not read EXIF data from {img_fn}: {e}")
-    
-    else:
-        # For non-JPEG files (PNG, BMP, TIFF, etc.), use cv2
+    # Fallback to OpenCV if Pillow failed
+    if img is None:
         try:
             img = cv2.imread(img_fn)
             if img is not None:
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                logger.debug(f"Successfully read {img_fn} with cv2")
+                
+                # Handle EXIF orientation for OpenCV (manual approach)
+                if img_fn.lower().endswith(('jpeg', 'jpg')):
+                    img = _handle_exif_orientation_cv2(img_fn, img)
+                
+                logger.debug(f"Successfully read {img_fn} with OpenCV")
             else:
-                raise ValueError(f"cv2.imread returned None for {img_fn}")
+                raise ValueError(f"OpenCV imread returned None for {img_fn}")
+                
         except Exception as e:
-            logger.error(f"Failed to read {img_fn}: {e}")
+            logger.error(f"Failed to read {img_fn} with OpenCV: {e}")
             raise ValueError(f"Could not load image: {img_fn}")
     
     # Final check if image was loaded successfully
@@ -101,9 +89,59 @@ def read_img(img_fn, dtype=np.float32):
     return img
 
 
-def _apply_exif_orientation(img, orientation):
+def _apply_exif_orientation_pil(pil_image):
     """
-    Apply EXIF orientation transformation to image.
+    Apply EXIF orientation transformation to PIL image.
+    Uses Pillow's built-in orientation handling.
+    
+    Args:
+        pil_image (PIL.Image): Input PIL image
+        
+    Returns:
+        PIL.Image: Oriented image
+    """
+    try:
+        # Use Pillow's built-in EXIF orientation handling
+        pil_image = pil_img.ImageOps.exif_transpose(pil_image)
+    except Exception as e:
+        logger.warning(f"Could not apply EXIF orientation: {e}")
+    
+    return pil_image
+
+
+def _handle_exif_orientation_cv2(img_fn, img):
+    """
+    Handle EXIF orientation for OpenCV-loaded images.
+    
+    Args:
+        img_fn (str): Image filename
+        img (numpy.ndarray): OpenCV-loaded image
+        
+    Returns:
+        numpy.ndarray: Oriented image
+    """
+    try:
+        with pil_img.open(img_fn) as pil_image:
+            exif_raw_dict = pil_image._getexif()
+            if exif_raw_dict is not None:
+                exif_data = {
+                    PIL.ExifTags.TAGS[k]: v
+                    for k, v in exif_raw_dict.items()
+                    if k in PIL.ExifTags.TAGS
+                }
+                orientation = exif_data.get('Orientation', 1)
+                if orientation != 1:
+                    img = _apply_exif_orientation_numpy(img, orientation)
+                    logger.debug(f"Applied EXIF orientation {orientation} to {img_fn}")
+    except Exception as e:
+        logger.warning(f"Could not read EXIF data from {img_fn}: {e}")
+    
+    return img
+
+
+def _apply_exif_orientation_numpy(img, orientation):
+    """
+    Apply EXIF orientation transformation to numpy array.
     
     Args:
         img (numpy.ndarray): Input image
@@ -139,3 +177,68 @@ def _apply_exif_orientation(img, orientation):
     else:
         logger.warning(f"Unknown EXIF orientation: {orientation}")
         return img
+
+
+def read_img_fast(img_fn, dtype=np.float32):
+    """
+    Fast image reading function optimized for performance.
+    Uses OpenCV for speed, Pillow for fallback.
+    
+    Args:
+        img_fn (str): Path to image file
+        dtype: Target data type (np.float32 or np.uint8)
+        
+    Returns:
+        numpy.ndarray: Image array in RGB format
+    """
+    # Try OpenCV first for speed
+    try:
+        img = cv2.imread(img_fn)
+        if img is not None:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            
+            # Handle EXIF orientation if JPEG
+            if img_fn.lower().endswith(('jpeg', 'jpg')):
+                img = _handle_exif_orientation_cv2(img_fn, img)
+            
+            # Convert dtype
+            if dtype == np.float32 and img.dtype == np.uint8:
+                img = img.astype(dtype) / 255.0
+            elif dtype == np.uint8 and img.dtype != np.uint8:
+                img = np.clip(img * 255.0, 0, 255).astype(np.uint8)
+                
+            return img
+    except Exception as e:
+        logger.warning(f"OpenCV failed for {img_fn}: {e}")
+    
+    # Fallback to regular read_img
+    return read_img(img_fn, dtype)
+
+
+def save_img(img, img_fn, quality=95):
+    """
+    Save image to file with proper format handling.
+    
+    Args:
+        img (numpy.ndarray): Image array
+        img_fn (str): Output filename
+        quality (int): JPEG quality (if saving as JPEG)
+    """
+    try:
+        # Ensure proper data type
+        if img.dtype != np.uint8:
+            img = np.clip(img * 255.0, 0, 255).astype(np.uint8)
+        
+        # Convert to PIL and save
+        pil_image = pil_img.fromarray(img)
+        
+        if img_fn.lower().endswith(('jpeg', 'jpg')):
+            pil_image.save(img_fn, 'JPEG', quality=quality, optimize=True)
+        else:
+            pil_image.save(img_fn)
+            
+        logger.debug(f"Successfully saved image to {img_fn}")
+        
+    except Exception as e:
+        logger.error(f"Failed to save image to {img_fn}: {e}")
+        raise
