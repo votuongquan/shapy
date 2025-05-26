@@ -1,27 +1,52 @@
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
-WORKDIR /app
+# Multi-stage build for smaller final image
+FROM python:3.12-slim as builder
 
-RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
     build-essential \
-    python3-dev \
-    hdf5-tools \
-    libgl1 \
-    libgtk2.0-dev
+    cmake \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
+WORKDIR /build
 
-COPY . /app
+# Copy project files
+COPY . .
 
+# Upgrade pip
 RUN python -m pip install --upgrade pip==23.3.1
-RUN pip install --no-cache-dir -r requirements.txt
 
-ENV CUDA_HOME=/usr/local/cuda
-ENV PATH=$CUDA_HOME/bin:$PATH
-ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-ENV TORCH_CUDA_ARCH_LIST="8.9"
+# Install requirements and mesh-mesh-intersection
+RUN pip install -r requirements.txt
+RUN pip install ./shapy/mesh-mesh-intersection
 
-RUN pip install /app/mesh-mesh-intersection
+# Final stage - runtime image
+FROM python:3.12-slim
 
-EXPOSE 8080
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
-CMD ["python", "regressor/app.py"]
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+WORKDIR /app
+COPY . .
+
+# Set Python path
+ENV PYTHONPATH="${PYTHONPATH}:/app/attributes:/usr/local"
+
+# Set working directory to regressor
+WORKDIR /app/regressor
+
+# Default command
+CMD ["python", "app.py"]
