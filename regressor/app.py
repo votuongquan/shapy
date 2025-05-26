@@ -25,79 +25,79 @@ def allowed_file(filename, allowed_extensions):
 
 @app.route('/process', methods=['POST'])
 def process_image():
+    # try:
+    # Check if both files are present in the request
+    if 'image' not in request.files or 'keypoints' not in request.files:
+        return jsonify({"error": "Both 'image' and 'keypoints' files are required"}), 400
+    
+    image_file = request.files['image']
+    keypoints_file = request.files['keypoints']
+    
+    # Check if files are selected
+    if image_file.filename == '' or keypoints_file.filename == '':
+        return jsonify({"error": "No files selected"}), 400
+    
+    # Validate file extensions
+    if not allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
+        return jsonify({"error": "Invalid image file format. Allowed: jpg, jpeg, png, bmp, tiff"}), 400
+    
+    if not allowed_file(keypoints_file.filename, ALLOWED_JSON_EXTENSIONS):
+        return jsonify({"error": "Invalid keypoints file format. Must be JSON"}), 400
+    
+    # Secure filenames
+    image_filename = secure_filename(image_file.filename)
+    keypoints_filename = secure_filename(keypoints_file.filename)
+    
+    # Save uploaded files
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+    keypoints_path = os.path.join(app.config['UPLOAD_FOLDER'], keypoints_filename)
+    
+    image_file.save(image_path)
+    keypoints_file.save(keypoints_path)
+    
+    # Validate JSON file
     try:
-        # Check if both files are present in the request
-        if 'image' not in request.files or 'keypoints' not in request.files:
-            return jsonify({"error": "Both 'image' and 'keypoints' files are required"}), 400
+        with open(keypoints_path, 'r') as f:
+            json.load(f)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON format in keypoints file"}), 400
+    
+    print("Files uploaded successfully. Initializing processor...")
+    
+    # Initialize processor
+    processor = SingleImageProcessor(
+        config_path=CONFIG_PATH,
+        model_path=MODEL_PATH,
+        device=DEVICE
+    )
+    
+    # Generate output filename
+    base_name = os.path.splitext(image_filename)[0]
+    output_filename = f"{base_name}_mesh.ply"
+    output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+    
+    print("Processing image...")
+    
+    # Process image
+    result_path = processor.process_image(
+        image_path=image_path,
+        keypoints_path=keypoints_path,
+        output_path=output_path
+    )
+    
+    print(f"Success! Generated PLY mesh: {result_path}")
+    
+    # Return success response with file info
+    return jsonify({
+        "success": True,
+        "message": "PLY mesh generated successfully",
+        "output_file": output_filename,
+        "download_url": f"/download/{output_filename}"
+    }), 200
         
-        image_file = request.files['image']
-        keypoints_file = request.files['keypoints']
-        
-        # Check if files are selected
-        if image_file.filename == '' or keypoints_file.filename == '':
-            return jsonify({"error": "No files selected"}), 400
-        
-        # Validate file extensions
-        if not allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
-            return jsonify({"error": "Invalid image file format. Allowed: jpg, jpeg, png, bmp, tiff"}), 400
-        
-        if not allowed_file(keypoints_file.filename, ALLOWED_JSON_EXTENSIONS):
-            return jsonify({"error": "Invalid keypoints file format. Must be JSON"}), 400
-        
-        # Secure filenames
-        image_filename = secure_filename(image_file.filename)
-        keypoints_filename = secure_filename(keypoints_file.filename)
-        
-        # Save uploaded files
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
-        keypoints_path = os.path.join(app.config['UPLOAD_FOLDER'], keypoints_filename)
-        
-        image_file.save(image_path)
-        keypoints_file.save(keypoints_path)
-        
-        # Validate JSON file
-        try:
-            with open(keypoints_path, 'r') as f:
-                json.load(f)
-        except json.JSONDecodeError:
-            return jsonify({"error": "Invalid JSON format in keypoints file"}), 400
-        
-        print("Files uploaded successfully. Initializing processor...")
-        
-        # Initialize processor
-        processor = SingleImageProcessor(
-            config_path=CONFIG_PATH,
-            model_path=MODEL_PATH,
-            device=DEVICE
-        )
-        
-        # Generate output filename
-        base_name = os.path.splitext(image_filename)[0]
-        output_filename = f"{base_name}_mesh.ply"
-        output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
-        
-        print("Processing image...")
-        
-        # Process image
-        result_path = processor.process_image(
-            image_path=image_path,
-            keypoints_path=keypoints_path,
-            output_path=output_path
-        )
-        
-        print(f"Success! Generated PLY mesh: {result_path}")
-        
-        # Return success response with file info
-        return jsonify({
-            "success": True,
-            "message": "PLY mesh generated successfully",
-            "output_file": output_filename,
-            "download_url": f"/download/{output_filename}"
-        }), 200
-        
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({"error": f"Processing failed: {str(e)}"}), 500
+    # except Exception as e:
+    #     print(f"Error: {str(e)}")
+    #     return jsonify({"error": f"Processing failed: {str(e)}"}), 500
 
 @app.route('/download/<filename>')
 def download_file(filename):
