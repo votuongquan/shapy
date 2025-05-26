@@ -43,7 +43,7 @@ RUN apt-get update -y && \
 COPY . /app
 
 # Upgrade pip
-RUN python -m pip install --upgrade pip
+RUN python -m pip install --upgrade pip==23.3.1
 
 # Install requirements first
 RUN pip install --no-cache-dir -r requirements.txt
