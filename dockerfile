@@ -1,4 +1,5 @@
 FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+
 WORKDIR /app
 
 RUN apt-get update -y && \
@@ -22,6 +23,18 @@ RUN apt-get update -y && \
     libxext6 \
     libxrender-dev \
     libgomp1 \
+    libjpeg-turbo8-dev \
+    libjpeg8-dev \
+    libpng-dev \
+    libtiff5-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libv4l-dev \
+    libxvidcore-dev \
+    libx264-dev \
+    libatlas-base-dev \
+    gfortran \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /app
