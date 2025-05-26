@@ -430,21 +430,11 @@ class SMPLH(SMPL):
             dtype=dtype, single_vertex_per_tip=single_vertex_per_tip,
             **kwargs)
 
-        # Use getattr with lambda as default_factory to avoid mutable defaults
-        hands_meanl = getattr(data_struct, 'hands_meanl', lambda: np.array([]))()
-        hands_meanr = getattr(data_struct, 'hands_meanr', lambda: np.array([]))()
-        hands_componentsl = getattr(data_struct, 'hands_componentsl', lambda: np.array([]))()
-        hands_componentsr = getattr(data_struct, 'hands_componentsr', lambda: np.array([]))()
+        self.left_hand_pca_mean = data_struct.hands_meanl
+        self.right_hand_pca_mean = data_struct.hands_meanr
 
-        self.register_buffer('left_hand_pca_mean', 
-                        to_tensor(to_np(hands_meanl), dtype=dtype))
-        self.register_buffer('right_hand_pca_mean', 
-                        to_tensor(to_np(hands_meanr), dtype=dtype))
-
-        self.register_buffer('left_hand_components', 
-                        to_tensor(to_np(hands_componentsl), dtype=dtype))
-        self.register_buffer('right_hand_components', 
-                        to_tensor(to_np(hands_componentsr), dtype=dtype))
+        self.left_hand_components = data_struct.hands_componentsl
+        self.right_hand_components = data_struct.hands_componentsr
 
     def forward(
         self,
