@@ -23,7 +23,7 @@ class Checkpointer(object):
         self.scheduler = scheduler
         self.adv_optimizer = adv_optimizer
 
-        self.save_dir = '/app/data/trained_models/shapy/SHAPY_A/checkpoints' if save_dir == '/tmp/exp' else save_dir
+        self.save_dir = '/app/data/trained_models/shapy/SHAPY_A/checkpoints'
         if self.rank == 0:
             logger.info(f'Creating directory {self.save_dir}')
             os.makedirs(self.save_dir, exist_ok=True)
