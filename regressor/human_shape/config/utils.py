@@ -1,6 +1,6 @@
 from typing import Tuple
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from omegaconf import OmegaConf
 
 
@@ -36,4 +36,4 @@ class LeakyRelu:
 @dataclass
 class Activation:
     type: str = 'relu'
-    leaky_relu: LeakyRelu = field(default_factory=LeakyRelu)
+    leaky_relu: LeakyRelu = LeakyRelu()

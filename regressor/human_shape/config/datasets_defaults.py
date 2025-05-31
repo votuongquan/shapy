@@ -2,7 +2,7 @@ import sys
 from typing import Tuple, Optional
 from loguru import logger
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from omegaconf import OmegaConf
 from human_shape.utils.typing import StringTuple, FloatTuple
 
@@ -56,9 +56,9 @@ class NumWorkers:
 
 @dataclass
 class Splits:
-    train: StringTuple = field(default_factory=tuple)
-    val: StringTuple = field(default_factory=tuple)
-    test: StringTuple = field(default_factory=tuple)
+    train: StringTuple = tuple()
+    val: StringTuple = tuple()
+    test: StringTuple = tuple()
 
 
 @dataclass
@@ -152,7 +152,7 @@ class WeightHeight(DatasetWithKeypoints):
     data_folder: str = 'data/weight_height'
     data_fname: str = 'weight_height.npz'
     img_folder: str = 'images'
-    metrics: StringTuple = field(default_factory=tuple)
+    metrics: StringTuple = tuple()
     body_thresh: float = 0.1
     hand_thresh: float = 0.2
     face_thresh: float = 0.4
@@ -229,7 +229,7 @@ class SPINX(SPIN):
     return_full_pose: bool = True
     return_expression: bool = True
     return_vertices: bool = True
-    metrics: StringTuple = field(default_factory=tuple)
+    metrics: StringTuple = tuple()
 
 
 @dataclass
@@ -237,9 +237,9 @@ class DatasetConfig:
     use_packed: bool = True
     use_face_contour: bool = True
     vertex_flip_correspondences: str = ''
-    transforms: Transforms = field(default_factory=Transforms)
-    splits: Splits = field(default_factory=Splits)
-    num_workers: NumWorkers = field(default_factory=NumWorkers)
+    transforms: Transforms = Transforms()
+    splits: Splits = Splits()
+    num_workers: NumWorkers = NumWorkers()
 
 
 @dataclass
@@ -301,19 +301,19 @@ class HBW(DatasetWithKeypoints):
 class PoseConfig(DatasetConfig):
     ''' Configuration for the body pose datasets
     '''
-    sampler: Sampler = field(default_factory=Sampler)
-    splits: Splits = field(default_factory=lambda: Splits(train=('curated_fits', 'spin')))
-    eft: EFT = field(default_factory=EFT)
-    openpose: OpenPose = field(default_factory=OpenPose)
-    tracks: Tracks = field(default_factory=Tracks)
-    human36m: Human36m = field(default_factory=Human36m)
-    human36mx: Human36mX = field(default_factory=Human36mX)
-    ehf: EHF = field(default_factory=EHF)
-    curated_fits: CuratedFits = field(default_factory=CuratedFits)
-    threedpw: ThreeDPW = field(default_factory=ThreeDPW)
-    spin: SPIN = field(default_factory=SPIN)
-    spinx: SPINX = field(default_factory=SPINX)
-    agora: Agora = field(default_factory=Agora)
+    sampler: Sampler = Sampler()
+    splits: Splits = Splits(train=('curated_fits', 'spin'))
+    eft: EFT = EFT()
+    openpose: OpenPose = OpenPose()
+    tracks: Tracks = Tracks()
+    human36m: Human36m = Human36m()
+    human36mx: Human36mX = Human36mX()
+    ehf: EHF = EHF()
+    curated_fits: CuratedFits = CuratedFits()
+    threedpw: ThreeDPW = ThreeDPW()
+    spin: SPIN = SPIN()
+    spinx: SPINX = SPINX()
+    agora: Agora = Agora()
 
 
 @dataclass
@@ -322,11 +322,11 @@ class ShapeConfig(DatasetConfig):
     '''
     balanced_genders: bool = True
     key: str = 'bmi'
-    model_agencies: Agencies = field(default_factory=Agencies)
-    ssp3d: SSP3D = field(default_factory=SSP3D)
-    weight_height: WeightHeight = field(default_factory=WeightHeight)
-    hbw: HBW = field(default_factory=HBW)
-    sampler: Sampler = field(default_factory=Sampler)
+    model_agencies: Agencies = Agencies()
+    ssp3d: SSP3D = SSP3D()
+    weight_height: WeightHeight = WeightHeight()
+    hbw: HBW = HBW()
+    sampler: Sampler = Sampler()
 
 
 pose_conf = OmegaConf.structured(PoseConfig)

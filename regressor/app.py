@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_file
 import os
 import json
 from werkzeug.utils import secure_filename
-from demo3 import SingleImageProcessor
+from single_processor import SingleImageProcessor
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "static"

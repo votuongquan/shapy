@@ -1,7 +1,7 @@
 from typing import Tuple, Optional
 from loguru import logger
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from omegaconf import OmegaConf
 from .network_defaults import conf as network_cfg, Network
 from .optim_defaults import conf as optim_cfg, OptimConfig
@@ -19,7 +19,7 @@ from .utils import FScores
 @dataclass
 class MPJPE:
     alignments: Tuple[str] = ('root', 'procrustes')
-    root_joints: Tuple[str] = field(default_factory=tuple)
+    root_joints: Tuple[str] = tuple()
 
 @dataclass
 class P2P_T:
@@ -31,13 +31,13 @@ class P2P_T:
 class Metrics:
     v2v: Tuple[str] = ('procrustes', 'scale', 'translation')
     v2v_t: Tuple[str] = ('scale', 'translation')
-    mpjpe: MPJPE = field(default_factory=MPJPE)
+    mpjpe: MPJPE = MPJPE()
     fscores_thresh: Optional[Tuple[float]] = (5.0 / 1000, 15.0 / 1000)
-    p2p_t: P2P_T = field(default_factory=P2P_T)
+    p2p_t: P2P_T = P2P_T()
 
 @dataclass
 class Evaluation:
-    body: Metrics = field(default_factory=lambda: Metrics(
+    body: Metrics = Metrics(
         mpjpe=MPJPE(
             root_joints=('left_hip', 'right_hip')),
         fscores_thresh=(10.0 / 1000, 20.0 / 1000,
@@ -45,7 +45,7 @@ class Evaluation:
                         75.0 / 1000,
                         100.0 / 1000,
                         )
-    ))
+    )
 
 
 
@@ -103,10 +103,10 @@ class Config:
         pose: PoseConfig = pose_data_conf
         shape: ShapeConfig = shape_data_conf
 
-    datasets: Datasets = field(default_factory=Datasets)
-    losses: LossConfig = field(default_factory=LossConfig)
+    datasets: Datasets = Datasets()
+    losses: LossConfig = LossConfig()
 
-    evaluation: Evaluation = field(default_factory=Evaluation)
+    evaluation: Evaluation = Evaluation()
     run_final_evaluation_on_validation_set: bool = False
 
 conf = OmegaConf.structured(Config)
