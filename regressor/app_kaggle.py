@@ -2,14 +2,14 @@ from flask import Flask, request, jsonify, send_file
 import os
 import json
 from werkzeug.utils import secure_filename
-from demo3 import SingleImageProcessor
+from single_processor import SingleImageProcessor
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "static"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 CONFIG_PATH = "configs/b2a_expose_hrnet_demo.yaml"  
-MODEL_PATH = "/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A"        
+MODEL_PATH = "/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A"         
 DEVICE = "cuda"  # or "cpu"
 
 # Ensure the static directory exists

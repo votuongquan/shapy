@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from demo3 import SingleImageProcessor
+from single_processor import SingleImageProcessor
 
 def main():
     parser = argparse.ArgumentParser(description='Process image to generate 3D PLY mesh')
