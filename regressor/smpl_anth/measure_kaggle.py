@@ -8,11 +8,11 @@ from pprint import pprint
 import os
 import argparse
 
-from measurement_definitions import *
-from utils import *
-from visualize import Visualizer
-from landmark_definitions import *
-from joint_definitions import *
+from smpl_anth.measurement_definitions import *
+from smpl_anth.utils import *
+from smpl_anth.visualize import Visualizer
+from smpl_anth.landmark_definitions import *
+from smpl_anth.joint_definitions import *
 
 
 
