@@ -31,8 +31,8 @@ if __name__ == "__main__":
 
     import torch
     import pandas as pd
-    from measure import MeasureSMPL
-    from measurement_definitions import MeasurementDefinitions
+    from smpl_anth.measure_kaggle import MeasureSMPL
+    from smpl_anth.measurement_definitions import MeasurementDefinitions
 
     smpl_path = "/SMPL-Anthropometry/data/SMPL"
     

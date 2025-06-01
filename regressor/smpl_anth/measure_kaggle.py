@@ -393,7 +393,7 @@ class MeasureSMPLX(Measurer):
         super().__init__()
 
         self.model_type = "smplx"
-        self.body_model_root = r"E:\School\EXE\real_shapy\shapy\data\body_models"
+        self.body_model_root = r"/kaggle/input/models-smplx-v1-1-0/body_models"
         self.body_model_path = os.path.join(self.body_model_root, 
                                             self.model_type)
 
