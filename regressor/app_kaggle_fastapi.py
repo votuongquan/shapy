@@ -4,13 +4,18 @@ import os
 import json
 import shutil
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import uuid
+import torch
+import trimesh
+import numpy as np
 
 from mediapipe_extract import MediaPipePoseExtractor
 from single_processor import SingleImageProcessor
+from smpl_anth.measure_kaggle import MeasureSMPLX
+from smpl_anth.measurement_definitions import STANDARD_LABELS
 
-app = FastAPI(title="3D Human Mesh Generator", version="1.0.0")
+app = FastAPI(title="3D Human Mesh Generator with Body Measurements", version="1.1.0")
 
 # Configuration
 UPLOAD_FOLDER = "static"
@@ -31,10 +36,58 @@ def is_allowed_image(filename: str) -> bool:
     """Check if the uploaded file has an allowed image extension"""
     return Path(filename).suffix.lower() in ALLOWED_IMAGE_EXTENSIONS
 
+def extract_body_measurements(ply_path: str) -> Dict[str, Any]:
+    """
+    Extract body measurements from a PLY file using the measurement system
+    
+    Args:
+        ply_path: Path to the PLY file
+        
+    Returns:
+        Dictionary containing measurements and labeled measurements
+    """
+    try:
+        # Load PLY file vertices
+        verts = trimesh.load(ply_path, process=False).vertices 
+        verts_tensor = torch.from_numpy(verts).float()
+        
+        # Initialize measurer
+        measurer = MeasureSMPLX()
+        measurer.from_verts(verts=verts_tensor)
+        
+        # Get all possible measurements
+        measurement_names = measurer.all_possible_measurements
+        measurer.measure(measurement_names)
+        
+        # Get raw measurements
+        raw_measurements = measurer.measurements
+        
+        # Apply standard labels
+        measurer.label_measurements(STANDARD_LABELS)
+        labeled_measurements = measurer.labeled_measurements
+        
+        return {
+            "success": True,
+            "raw_measurements": raw_measurements,
+            "labeled_measurements": labeled_measurements,
+            "measurement_count": len(raw_measurements),
+            "labeled_count": len(labeled_measurements)
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "raw_measurements": {},
+            "labeled_measurements": {},
+            "measurement_count": 0,
+            "labeled_count": 0
+        }
+
 @app.post("/process-image")
 async def process_complete_pipeline(file: UploadFile = File(...)):
     """
-    Complete pipeline: Upload image → Extract pose keypoints → Generate 3D mesh
+    Complete pipeline: Upload image → Extract pose keypoints → Generate 3D mesh → Extract body measurements
     
     Returns:
     - success: boolean
@@ -42,6 +95,7 @@ async def process_complete_pipeline(file: UploadFile = File(...)):
     - pose_data: extracted pose keypoints
     - output_file: generated PLY mesh filename
     - download_url: URL to download the PLY file
+    - measurements: body measurements extracted from the 3D mesh
     """
     try:
         # Validate file
@@ -63,11 +117,13 @@ async def process_complete_pipeline(file: UploadFile = File(...)):
         image_filename = f"{original_name}_{file_id}{file_extension}"
         json_filename = f"{original_name}_{file_id}_keypoints.json"
         ply_filename = f"{original_name}_{file_id}_mesh.ply"
+        measurements_filename = f"{original_name}_{file_id}_measurements.json"
         
         # File paths
         image_path = os.path.join(UPLOAD_FOLDER, image_filename)
         json_path = os.path.join(UPLOAD_FOLDER, json_filename)
         ply_path = os.path.join(UPLOAD_FOLDER, ply_filename)
+        measurements_path = os.path.join(UPLOAD_FOLDER, measurements_filename)
         
         # Save uploaded image
         with open(image_path, "wb") as buffer:
@@ -120,20 +176,25 @@ async def process_complete_pipeline(file: UploadFile = File(...)):
             print(f"3D mesh generation error: {str(e)}")
             raise HTTPException(status_code=500, detail=f"3D mesh generation failed: {str(e)}")
         
+        # Step 3: Extract body measurements from the generated PLY file
+        print("Extracting body measurements...")
+        measurements_result = extract_body_measurements(ply_path)
+        
+        # Save measurements to JSON file
+        with open(measurements_path, 'w') as f:
+            json.dump(measurements_result, f, indent=2)
+        
+        print(f"Measurements saved: {measurements_path}")
+        
         # Return success response
         return JSONResponse(
             status_code=200,
             content={
                 "success": True,
-                "message": "3D mesh generated successfully",
+                "message": "3D mesh and body measurements generated successfully",
                 "pose_data": pose_results,
                 "output_file": ply_filename,
-                "download_url": f"/download/{ply_filename}",
-                "files_generated": {
-                    "image": image_filename,
-                    "keypoints": json_filename,
-                    "mesh": ply_filename
-                }
+                "measurements": measurements_result,
             }
         )
         
@@ -144,67 +205,10 @@ async def process_complete_pipeline(file: UploadFile = File(...)):
         print(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
-@app.post("/extract-pose")
-async def extract_pose_only(file: UploadFile = File(...)):
-    """
-    Extract pose keypoints only (without 3D mesh generation)
-    
-    Returns:
-    - pose_data: extracted pose keypoints in OpenPose format
-    - keypoints_file: JSON filename
-    - download_url: URL to download the JSON file
-    """
-    try:
-        # Validate file
-        if not file.filename:
-            raise HTTPException(status_code=400, detail="No file provided")
-        
-        if not is_allowed_image(file.filename):
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Invalid image format. Allowed: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
-            )
-        
-        # Generate unique filename
-        file_id = str(uuid.uuid4())[:8]
-        original_name = Path(file.filename).stem
-        file_extension = Path(file.filename).suffix
-        
-        image_filename = f"{original_name}_{file_id}{file_extension}"
-        json_filename = f"{original_name}_{file_id}_keypoints.json"
-        
-        image_path = os.path.join(UPLOAD_FOLDER, image_filename)
-        json_path = os.path.join(UPLOAD_FOLDER, json_filename)
-        
-        # Save uploaded image
-        with open(image_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        # Extract pose keypoints
-        pose_results = extractor.extract_keypoints_from_image(image_path)
-        
-        # Save keypoints to JSON
-        with open(json_path, 'w') as f:
-            json.dump(pose_results, f, indent=2)
-        
-        return JSONResponse(
-            status_code=200,
-            content={
-                "success": True,
-                "message": "Pose keypoints extracted successfully",
-                "pose_data": pose_results,
-                "keypoints_file": json_filename,
-                "download_url": f"/download/{json_filename}"
-            }
-        )
-        
-    except Exception as e:
-        print(f"Error extracting pose: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Pose extraction failed: {str(e)}")
 
 @app.get("/download/{filename}")
 async def download_file(filename: str):
-    """Download generated files (PLY meshes, JSON keypoints, etc.)"""
+    """Download generated files (PLY meshes, JSON keypoints, measurements, etc.)"""
     try:
         # Sanitize filename to prevent path traversal
         safe_filename = os.path.basename(filename)
@@ -251,7 +255,8 @@ async def health_check():
             "config_exists": os.path.exists(CONFIG_PATH),
             "model_exists": os.path.exists(MODEL_PATH),
             "upload_folder": UPLOAD_FOLDER,
-            "upload_folder_exists": os.path.exists(UPLOAD_FOLDER)
+            "upload_folder_exists": os.path.exists(UPLOAD_FOLDER),
+            "torch_available": torch.cuda.is_available() if DEVICE == "cuda" else True
         }
     )
 
@@ -260,17 +265,22 @@ async def root():
     """Root endpoint with API information"""
     return JSONResponse(
         content={
-            "message": "3D Human Mesh Generator API",
-            "version": "1.0.0",
+            "message": "3D Human Mesh Generator with Body Measurements API",
+            "version": "1.1.0",
             "endpoints": {
-                "POST /process-image": "Complete pipeline: extract pose + generate 3D mesh",
-                "POST /extract-pose": "Extract pose keypoints only",
+                "POST /process-image": "Complete pipeline: extract pose + generate 3D mesh + extract measurements",
                 "GET /download/{filename}": "Download generated files",
                 "GET /health": "Health check",
                 "GET /docs": "API documentation (Swagger UI)",
                 "GET /redoc": "API documentation (ReDoc)"
             },
-            "supported_formats": list(ALLOWED_IMAGE_EXTENSIONS)
+            "supported_formats": {
+                "images": list(ALLOWED_IMAGE_EXTENSIONS),
+                "3d_models": [".ply"]
+            },
+            "features": [
+                "Comprehensive body measurements extraction",
+            ]
         }
     )
 
@@ -278,7 +288,7 @@ async def root():
 @app.on_event("startup")
 async def startup_event():
     """Check configuration on startup"""
-    print("Starting 3D Human Mesh Generator API...")
+    print("Starting 3D Human Mesh Generator with Body Measurements API...")
     print(f"Upload folder: {UPLOAD_FOLDER}")
     print(f"Config path: {CONFIG_PATH}")
     print(f"Model path: {MODEL_PATH}")
@@ -295,9 +305,16 @@ async def startup_event():
     else:
         print("✅ Model directory found")
     
+    # Check PyTorch setup
+    if DEVICE == "cuda" and torch.cuda.is_available():
+        print(f"✅ CUDA available: {torch.cuda.get_device_name()}")
+    elif DEVICE == "cuda":
+        print("⚠️  Warning: CUDA not available, falling back to CPU")
+    else:
+        print("✅ Using CPU device")
+    
     print("API endpoints:")
-    print("  POST /process-image - Complete pipeline")
-    print("  POST /extract-pose - Pose extraction only")
+    print("  POST /process-image - Complete pipeline with measurements")
     print("  GET /download/<filename> - Download files")
     print("  GET /health - Health check")
     print("  GET /docs - API documentation")
