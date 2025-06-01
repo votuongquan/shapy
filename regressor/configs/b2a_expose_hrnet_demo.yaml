@@ -58,7 +58,7 @@ datasets:
       # meas_vertices_path: '../data/utility_files/measurements/smplx_measurements.yaml'
       meas_vertices_path: "/kaggle/input/shapy-data/utility_files/measurements/smplx_measurements.yaml"
       # body_model_folder: "../data/body_models/"
-      body_model_folder: "/kaggle/input/models-smplx-v1-1-0/models"
+      body_model_folder: "/kaggle/input/models-smplx-v1-1-0/body_models"
   pose:
     # vertex_flip_correspondences: '../data/utility_files/smplx/smplx_correspondences.npz'
     vertex_flip_correspondences: "/kaggle/input/shapy-data/utility_files/smplx/smplx_correspondences.npz"
@@ -225,7 +225,7 @@ network:
 body_model:
   type: "smplx"
   #   model_folder: "../data/body_models/"
-  model_folder: "/kaggle/input/models-smplx-v1-1-0/models"
+  model_folder: "/kaggle/input/models-smplx-v1-1-0/body_models"
   smplx:
     # mean_pose_path: '../data/expose_release/data/all_means.pkl'
     mean_pose_path: "/kaggle/input/shapy-data/expose_release/data/all_means.pkl"
