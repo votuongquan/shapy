@@ -393,7 +393,7 @@ class MeasureSMPLX(Measurer):
         super().__init__()
 
         self.model_type = "smplx"
-        self.body_model_root = "data"
+        self.body_model_root = "../../data/body_models"
         self.body_model_path = os.path.join(self.body_model_root, 
                                             self.model_type)
 
