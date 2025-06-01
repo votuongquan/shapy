@@ -22,3 +22,6 @@ fvcore
 nflows
 PyYAML
 flask
+fastapi
+uvicorn
+python-multipart
