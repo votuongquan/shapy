@@ -69,7 +69,6 @@ def extract_body_measurements(ply_path: str) -> Dict[str, Any]:
         return {
             "success": True,
             "raw_measurements": raw_measurements,
-            "labeled_measurements": labeled_measurements,
             "measurement_count": len(raw_measurements),
             "labeled_count": len(labeled_measurements)
         }
@@ -79,7 +78,6 @@ def extract_body_measurements(ply_path: str) -> Dict[str, Any]:
             "success": False,
             "error": str(e),
             "raw_measurements": {},
-            "labeled_measurements": {},
             "measurement_count": 0,
             "labeled_count": 0
         }
