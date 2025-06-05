@@ -70,7 +70,6 @@ def extract_body_measurements(ply_path: str) -> Dict[str, Any]:
             "success": True,
             "raw_measurements": raw_measurements,
             "measurement_count": len(raw_measurements),
-            "labeled_count": len(labeled_measurements)
         }
         
     except Exception as e:
@@ -79,7 +78,6 @@ def extract_body_measurements(ply_path: str) -> Dict[str, Any]:
             "error": str(e),
             "raw_measurements": {},
             "measurement_count": 0,
-            "labeled_count": 0
         }
 
 @app.post("/process-image")
