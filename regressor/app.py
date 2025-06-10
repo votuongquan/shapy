@@ -19,15 +19,23 @@ app = FastAPI(title="3D Human Mesh Generator with Body Measurements", version="1
 
 # Configuration
 UPLOAD_FOLDER = "static"
-CONFIG_PATH = "configs/b2a_expose_hrnet_demo.yaml"  
-MODEL_PATH = "/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A"         
+CONFIG_PATH = "configs/b2a_expose_hrnet_app.yaml"  
+MODEL_PATH = "../data/trained_models/shapy/SHAPY_A"         
 DEVICE = "cuda"  # or "cpu"
 
 # Ensure the static directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Initialize MediaPipe extractor
+# Initialize all three modules
 extractor = MediaPipePoseExtractor()
+
+measurer = MeasureSMPLX()
+
+processor = SingleImageProcessor(
+    config_path=CONFIG_PATH,
+    model_path=MODEL_PATH,
+    device=DEVICE
+)
 
 # Allowed file extensions
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
@@ -52,7 +60,6 @@ def extract_body_measurements(ply_path: str) -> Dict[str, Any]:
         verts_tensor = torch.from_numpy(verts).float()
         
         # Initialize measurer
-        measurer = MeasureSMPLX()
         measurer.from_verts(verts=verts_tensor)
         
         # Get all possible measurements
@@ -154,13 +161,6 @@ async def process_complete_pipeline(file: UploadFile = File(...)):
         # Step 2: Generate 3D mesh using SHAPY
         print("Generating 3D mesh...")
         try:
-            # Initialize processor (you might want to do this once at startup for better performance)
-            processor = SingleImageProcessor(
-                config_path=CONFIG_PATH,
-                model_path=MODEL_PATH,
-                device=DEVICE
-            )
-            
             # Process image to generate 3D mesh
             result_path = processor.process_image(
                 image_path=image_path,
