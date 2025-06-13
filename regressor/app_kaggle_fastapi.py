@@ -21,7 +21,7 @@ app = FastAPI(title="3D Human Mesh Generator with Body Measurements", version="1
 UPLOAD_FOLDER = "static"
 CONFIG_PATH = "configs/b2a_expose_hrnet_demo.yaml"  
 MODEL_PATH = "/kaggle/input/shapy-data/trained_models/shapy/SHAPY_A"         
-DEVICE = "cuda"  # or "cpu"
+DEVICE = "cpu"  # or "cpu"
 
 # Ensure the static directory exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
