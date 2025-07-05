@@ -9,7 +9,12 @@ import shutil
 # os.environ['PYOPENGL_PLATFORM'] = 'egl'
 
 from threadpoolctl import threadpool_limits
-import trimesh
+# import trimesh  # Comment out trimesh to avoid CUDA issues
+try:
+    import trimesh
+    TRIMESH_AVAILABLE = True
+except ImportError:
+    TRIMESH_AVAILABLE = False
 import torch
 import time
 from collections import defaultdict
@@ -168,7 +173,98 @@ class SingleImageProcessor:
         
         self.cfg.datasets.pose.splits.test = ['openpose']
     
-    def _weak_persp_to_blender(self, targets, camera_scale, camera_transl, H, W):
+    def _write_ply_file(self, vertices, faces, output_path):
+        """
+        Write PLY file manually to avoid CUDA issues with trimesh.
+        
+        Args:
+            vertices: numpy array of vertices (N, 3)
+            faces: numpy array of faces (F, 3)
+            output_path: path to save the PLY file
+        """
+        try:
+            with open(output_path, 'w') as f:
+                # Write PLY header
+                f.write('ply\n')
+                f.write('format ascii 1.0\n')
+                f.write(f'element vertex {len(vertices)}\n')
+                f.write('property float x\n')
+                f.write('property float y\n')
+                f.write('property float z\n')
+                f.write(f'element face {len(faces)}\n')
+                f.write('property list uchar int vertex_index\n')
+                f.write('end_header\n')
+                
+                # Write vertices
+                for vertex in vertices:
+                    f.write(f'{vertex[0]:.6f} {vertex[1]:.6f} {vertex[2]:.6f}\n')
+                
+                # Write faces
+                for face in faces:
+                    f.write(f'3 {face[0]} {face[1]} {face[2]}\n')
+                    
+            logger.info(f"PLY file written manually to: {output_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Manual PLY writing failed: {e}")
+        def _weak_persp_to_blender(self, targets, camera_scale, camera_transl, H, W):
+    
+    def _create_mesh_safe(self, vertices, faces, output_path):
+        """
+        Create mesh using the safest available method.
+        
+        Args:
+            vertices: numpy array of vertices
+            faces: numpy array of faces  
+            output_path: path to save the mesh
+        """
+        # Method 1: Try manual PLY writing first (most reliable)
+        if self._write_ply_file(vertices, faces, output_path):
+            return True
+            
+        # Method 2: Try trimesh with maximum safety settings
+        if TRIMESH_AVAILABLE:
+            try:
+                # Create mesh with all safety flags
+                mesh = trimesh.Trimesh(
+                    vertices=vertices,
+                    faces=faces,
+                    process=False,
+                    validate=False,
+                    use_embree=False,  # Disable embree which might use CUDA
+                    visual=None
+                )
+                
+                # Force all internal arrays to be numpy arrays
+                if hasattr(mesh, 'vertices'):
+                    mesh.vertices = np.array(mesh.vertices)
+                if hasattr(mesh, 'faces'):
+                    mesh.faces = np.array(mesh.faces)
+                
+                # Export with explicit format
+                mesh.export(output_path, file_type='ply')
+                logger.info(f"Mesh exported using trimesh to: {output_path}")
+                return True
+                
+            except Exception as e:
+                logger.warning(f"Trimesh export failed: {e}")
+                
+        # Method 3: Try alternative libraries
+        try:
+            import open3d as o3d
+            mesh = o3d.geometry.TriangleMesh()
+            mesh.vertices = o3d.utility.Vector3dVector(vertices.astype(np.float64))
+            mesh.triangles = o3d.utility.Vector3iVector(faces.astype(np.int32))
+            o3d.io.write_triangle_mesh(output_path, mesh)
+            logger.info(f"Mesh exported using Open3D to: {output_path}")
+            return True
+        except ImportError:
+            logger.warning("Open3D not available")
+        except Exception as e:
+            logger.warning(f"Open3D export failed: {e}")
+            
+        return False
         """Convert weak-perspective camera to perspective camera parameters."""
         if torch.is_tensor(camera_scale):
             camera_scale = camera_scale.detach().cpu().numpy()
@@ -313,53 +409,24 @@ class SingleImageProcessor:
                 if output_dir:  # Only create if directory path exists
                     os.makedirs(output_dir, exist_ok=True)
                 
-                # Create and save mesh with explicit CPU data
+                # Create and save mesh with safe method
                 try:
-                    # Ensure vertices are float64 for better precision
+                    # Ensure all data is on CPU and in correct format
                     vertices = (model_vertices[0] + hd_params['transl'][0]).astype(np.float64)
                     
                     # Ensure faces are integers
                     if faces.dtype != np.int32 and faces.dtype != np.int64:
                         faces = faces.astype(np.int32)
                     
-                    # Create mesh with process=False to avoid CUDA operations
-                    mesh = trimesh.Trimesh(
-                        vertices=vertices,
-                        faces=faces,
-                        process=False,
-                        validate=False  # Skip validation to avoid potential CUDA calls
-                    )
+                    # Use safe mesh creation method
+                    success = self._create_mesh_safe(vertices, faces, output_path)
                     
-                    # Export with specific format to ensure compatibility
-                    mesh.export(output_path, file_type='ply')
+                    if not success:
+                        raise RuntimeError("All mesh creation methods failed")
                     
                 except Exception as mesh_error:
                     logger.error(f"Mesh creation failed: {mesh_error}")
-                    # Fallback: try creating a simpler mesh
-                    try:
-                        vertices = model_vertices[0] + hd_params['transl'][0]
-                        # Create a basic PLY file manually if trimesh fails
-                        with open(output_path, 'w') as f:
-                            f.write('ply\n')
-                            f.write('format ascii 1.0\n')
-                            f.write(f'element vertex {len(vertices)}\n')
-                            f.write('property float x\n')
-                            f.write('property float y\n')
-                            f.write('property float z\n')
-                            f.write(f'element face {len(faces)}\n')
-                            f.write('property list uchar int vertex_index\n')
-                            f.write('end_header\n')
-                            
-                            for vertex in vertices:
-                                f.write(f'{vertex[0]} {vertex[1]} {vertex[2]}\n')
-                            
-                            for face in faces:
-                                f.write(f'3 {face[0]} {face[1]} {face[2]}\n')
-                        
-                        logger.info("Used fallback PLY creation method")
-                    except Exception as fallback_error:
-                        logger.error(f"Fallback mesh creation also failed: {fallback_error}")
-                        raise RuntimeError(f"Both mesh creation methods failed: {mesh_error}, {fallback_error}")
+                    raise RuntimeError(f"Mesh creation failed: {mesh_error}")
                 
                 
                 logger.info(f"PLY mesh saved to: {output_path}")

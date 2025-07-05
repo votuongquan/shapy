@@ -4,7 +4,8 @@ jpeg4py
 joblib
 kornia
 loguru
-trimesh
+trimesh[easy] --no-deps 
+open3d
 matplotlib
 numpy
 omegaconf==2.0.6
