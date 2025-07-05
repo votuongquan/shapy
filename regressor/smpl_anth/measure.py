@@ -488,7 +488,7 @@ if __name__ == "__main__":
         measurer = MeasureBody(model_type)
 
         betas = torch.zeros((1, 10), dtype=torch.float32)
-        measurer.from_body_model(gender="FEMALE", shape=betas)
+        measurer.from_body_model(gender="NEUTRAL", shape=betas)
 
         measurement_names = measurer.all_possible_measurements
         measurer.measure(measurement_names)
