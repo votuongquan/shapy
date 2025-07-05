@@ -11,7 +11,7 @@ import trimesh
 import numpy as np
 
 from mediapipe_extract import MediaPipePoseExtractor
-from single_processor import SingleImageProcessor
+from single_processor_cpu import SingleImageProcessor
 from smpl_anth.measure_kaggle import MeasureSMPLX
 from smpl_anth.measurement_definitions import STANDARD_LABELS
 
@@ -28,6 +28,13 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize MediaPipe extractor
 extractor = MediaPipePoseExtractor()
+measurer = MeasureSMPLX()
+
+processor = SingleImageProcessor(
+    config_path=CONFIG_PATH,
+    model_path=MODEL_PATH,
+    device=DEVICE
+)
 
 # Allowed file extensions
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
@@ -52,7 +59,6 @@ def extract_body_measurements(ply_path: str) -> Dict[str, Any]:
         verts_tensor = torch.from_numpy(verts).float()
         
         # Initialize measurer
-        measurer = MeasureSMPLX()
         measurer.from_verts(verts=verts_tensor)
         
         # Get all possible measurements
@@ -152,13 +158,6 @@ async def process_complete_pipeline(file: UploadFile = File(...)):
         # Step 2: Generate 3D mesh using SHAPY
         print("Generating 3D mesh...")
         try:
-            # Initialize processor (you might want to do this once at startup for better performance)
-            processor = SingleImageProcessor(
-                config_path=CONFIG_PATH,
-                model_path=MODEL_PATH,
-                device=DEVICE
-            )
-            
             # Process image to generate 3D mesh
             result_path = processor.process_image(
                 image_path=image_path,
